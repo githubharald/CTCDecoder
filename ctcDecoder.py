@@ -104,10 +104,10 @@ def ctcBestPath(mat, classes):
 	maxT,maxC=mat.shape
 	for t in range(maxT):
 			maxIdx=np.argmax(mat[t,:])
-			
 			if maxIdx!=lastMaxIdx and maxIdx!=blankIdx:
 					label+=classes[maxIdx]
-					lastMaxIdx=maxIdx
+			
+			lastMaxIdx=maxIdx
 
 	return label
 
