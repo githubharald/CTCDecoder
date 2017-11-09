@@ -7,9 +7,9 @@ class BeamEntry:
 	"information about one single beam at specific time-step"
 	def __init__(self):
 		self.prTotal=0 # blank and non-blank
-		self.prNonBlank=0 # blank
-		self.prBlank=0 # non-blank
-		self.y=() # labellings at current time-step
+		self.prNonBlank=0 # non-blank
+		self.prBlank=0 # blank
+		self.y=() # labelling at current time-step
 
 
 class BeamState:
