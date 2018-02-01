@@ -8,6 +8,10 @@ Connectionist Temporal Classification (CTC) decoding algorithms are implemented 
 - Beam Search Decoding: iteratively searches for best labelling, uses a character-level LM. File: `BeamSearch.py` \[2]
 - Token Passing: searches for most probable word sequence, words are restricted to the words from a dictionary. Can be extended to use a word-level LM. File: `TokenPassing.py` \[1]
 
+## Choosing the right algorithm
+[This paper](./doc/comparison.pdf) compares beam search decoding and token passing.
+It also gives suggestions when to use best path decoding, beam search decoding and token passing.
+
 ## Run
 ```python main.py```
 
@@ -49,11 +53,6 @@ Beam and prefix search calculate the probability of labellings. For the labellin
 The only path (see dashed line) which gives "" still has probability 0.36, therefore "a" is the result returned by beam search.
 
 ![ctc](./doc/ctc.png)
-
-## Choosing the right algorithm
-[This paper](./doc/comparison.pdf) compares beam search decoding and token passing.
-It also gives suggestions when to use best path decoding, beam search decoding and token passing.
-
 
 ## References
 
