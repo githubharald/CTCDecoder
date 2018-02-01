@@ -21,7 +21,7 @@ class BeamState:
 		"length-normalise probabilities to avoid penalising long labellings"
 		for (k,v) in self.entries.items():
 			labellingLen=len(self.entries[k].y)
-			self.entries[k].prTotal=self.entries[k].prTotal*(1.0/(labellingLen if labellingLen else 1))
+			self.entries[k].prTotal=self.entries[k].prTotal**(1.0/(labellingLen if labellingLen else 1))
 
 	def sort(self):
 		"return beams sorted by probability"

@@ -23,8 +23,8 @@ TOKEN        : "a"
 TARGET        : "the fake friend of the family, like the"
 BEST PATH     : "the fak friend of the fomly hae tC"     
 PREFIX SEARCH : "the fak friend of the fomcly hae tC"    
-BEAM SEARCH   : "the fak friend of the fomcly hae tC"    
-BEAM SEARCH LM: "the fake friend of the family, lie th"  
+BEAM SEARCH   : "the fak friend of the fomcly hae tC"
+BEAM SEARCH LM: "the fake friend of the family, fake th"
 TOKEN         : "the fake friend of the family fake the" 
 ```
 
@@ -44,11 +44,16 @@ Each column sums to 1 and each entry shows the probability of seeing a label at 
 ![img](./doc/vis.png)
 
 Illustration of the "Mini example" testcase: the RNN output is a table containing 2 time-steps (t0 and t1) and 3 labels (a, b and - as the special blank label).
-Best path decoding takes the most probable label per time-step which gives the path "--" and therefore the recognized text B("--")="" with probability 0.6\*0.6=0.36.
+Best path decoding takes the most probable label per time-step which gives the path "--" and therefore the recognized text "" with probability 0.6\*0.6=0.36.
 Beam and prefix search calculate the probability of labellings. For the labelling "a" it sums over the paths (see thin lines) "-a", "a-" and "aa" with probability 0.4\*0.4+2\*0.6\*0.4=0.64.
 The only path (see dashed line) which gives "" still has probability 0.36, therefore "a" is the result returned by beam search.
 
 ![ctc](./doc/ctc.png)
+
+## Choosing the right algorithm
+[This paper](./doc/comparison.pdf) compares beam search decoding and token passing.
+It also gives suggestions when to use best path decoding, beam search decoding and token passing.
+
 
 ## References
 
