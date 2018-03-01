@@ -1,12 +1,13 @@
 # CTC Decoding Algorithms with Language Model
 
-Connectionist Temporal Classification (CTC) decoding algorithms are implemented as python scripts. A minimalistic Language Model (LM) is used.
+Connectionist Temporal Classification (CTC) decoding algorithms are implemented as Python scripts. A minimalistic Language Model (LM) is used.
 
 ## Algorithms
 - Best Path Decoding: takes best label per time-step, then removes repeated labels and blanks from this path. File: `BestPath.py` \[1]
 - Prefix Search Decoding: best-first search through tree of labellings. File: `PrefixSearch.py` \[1]
 - Beam Search Decoding: iteratively searches for best labelling, uses a character-level LM. File: `BeamSearch.py` \[2]
 - Token Passing: searches for most probable word sequence, words are restricted to the words from a dictionary. Can be extended to use a word-level LM. File: `TokenPassing.py` \[1]
+- Word Beam Search: TensorFlow implementation see repository [CTCWordBeamSearch](https://github.com/githubharald/CTCWordBeamSearch)
 
 ## Choosing the right algorithm
 [This paper](./doc/comparison.pdf) compares beam search decoding and token passing.
@@ -37,7 +38,7 @@ TOKEN         : "the fake friend of the family fake the"
 - data/corpus.txt: the text from which the language model is generated. In this case it is just the scrambled ground-truth text.
 
 ## Notes
-These python scripts are intended for tests and experiments. 
+These Python scripts are intended for tests and experiments. 
 For productive use I implemented the functions in C++ (for performance reasons) and then added them to TensorFlow as custom ops.
 
 The ground-truth text is "the fake friend of the family, like the" and is a sample from the IAM Handwriting Database \[4]. 
