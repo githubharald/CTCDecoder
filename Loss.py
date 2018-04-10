@@ -37,7 +37,7 @@ def alpha(t, s, mat, lp, blank, cache):
 			return res
 	
 	# recursion on s and t
-	if lp[s]==blank or lp[s-2]==lp[s]:
+	if lp[s]==blank or (s>=2 and lp[s-2]==lp[s]):
 		res=alpha_prime(t, s, mat, lp, blank, cache)*mat[t,lp[s]]
 		cache[t][s]=res
 		return res
