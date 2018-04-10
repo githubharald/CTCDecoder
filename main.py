@@ -6,6 +6,7 @@ import PrefixSearch
 import BeamSearch
 import TokenPassing
 import LanguageModel
+import Loss
 
 
 def softmax(mat):
@@ -40,24 +41,33 @@ def testRealExample():
 	lm=LanguageModel.LanguageModel('data/corpus.txt', classes)
 	
 	# decode RNN output with different decoding algorithms
-	print('TARGET        :','"the fake friend of the family, like the"')
+	gt='the fake friend of the family, like the'
+	print('TARGET        :','"'+gt+'"')
 	print('BEST PATH     :', '"'+BestPath.ctcBestPath(mat, classes)+'"')
 	print('PREFIX SEARCH :', '"'+PrefixSearch.ctcPrefixSearchHeuristicSplit(mat, classes)+'"')
 	print('BEAM SEARCH   :', '"'+BeamSearch.ctcBeamSearch(mat, classes, None)+'"')
 	print('BEAM SEARCH LM:', '"'+BeamSearch.ctcBeamSearch(mat, classes, lm)+'"')
 	print('TOKEN         :', '"'+TokenPassing.ctcTokenPassing(mat, classes, lm.getWordList())+'"')
+	print('PROB(TARGET)  :', Loss.ctcLabelingProb(mat, gt, classes))
+	print('LOSS(TARGET)  :', Loss.ctcLoss(mat, gt, classes))
 
 
 def testMiniExample():
-	"example which shows difference between taking most probable path and most probable labelling. No language model used."
+	"example which shows difference between taking most probable path and most probable labeling. No language model used."
+	
+	# possible chars and input matrix
 	classes="ab"
 	mat=np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
 	
-	print('TARGET       :','"a"')
+	# decode
+	gt='a'
+	print('TARGET       :','"'+gt+'"')
 	print('BEST PATH    :', '"'+BestPath.ctcBestPath(mat, classes)+'"')
 	print('PREFIX SEARCH:', '"'+PrefixSearch.ctcPrefixSearch(mat, classes)+'"')
 	print('BEAM SEARCH  :', '"'+BeamSearch.ctcBeamSearch(mat, classes, None)+'"')
 	print('TOKEN        :', '"'+TokenPassing.ctcTokenPassing(mat, classes, ['a','b','ab','ba'])+'"')
+	print('PROB(TARGET) :', Loss.ctcLabelingProb(mat, gt, classes))
+	print('LOSS(TARGET) :', Loss.ctcLoss(mat, gt, classes))
 
 
 if __name__=='__main__':

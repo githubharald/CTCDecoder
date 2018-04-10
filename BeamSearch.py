@@ -9,7 +9,7 @@ class BeamEntry:
 		self.prTotal=0 # blank and non-blank
 		self.prNonBlank=0 # non-blank
 		self.prBlank=0 # blank
-		self.y=() # labelling at current time-step
+		self.y=() # labeling at current time-step
 
 
 class BeamState:
@@ -18,10 +18,10 @@ class BeamState:
 		self.entries={}
 
 	def norm(self):
-		"length-normalise probabilities to avoid penalising long labellings"
+		"length-normalise probabilities to avoid penalising long labelings"
 		for (k,v) in self.entries.items():
-			labellingLen=len(self.entries[k].y)
-			self.entries[k].prTotal=self.entries[k].prTotal**(1.0/(labellingLen if labellingLen else 1))
+			labelingLen=len(self.entries[k].y)
+			self.entries[k].prTotal=self.entries[k].prTotal**(1.0/(labelingLen if labelingLen else 1))
 
 	def sort(self):
 		"return beams sorted by probability"
@@ -31,7 +31,7 @@ class BeamState:
 
 
 def calcExtPr(k, y, t, mat, beamState, lm, classes):
-	"probability for extending labelling y to y+k"
+	"probability for extending labeling y to y+k"
 	
 	# language model (char bigrams)
 	bigramProb=1
@@ -48,8 +48,8 @@ def calcExtPr(k, y, t, mat, beamState, lm, classes):
 		return mat[t, k]*bigramProb*beamState.entries[y].prTotal
 
 
-def addLabelling(beamState, y):
-	"adds labelling if it does not exist yet"
+def addLabeling(beamState, y):
+	"adds labeling if it does not exist yet"
 	if y not in beamState.entries:
 		beamState.entries[y]=BeamEntry()
 
@@ -73,13 +73,13 @@ def ctcBeamSearch(mat, classes, lm):
 	for t in range(maxT):
 		curr=BeamState()
 		
-		# get best labellings
+		# get best labelings
 		BHat=last.sort()[0:beamWidth]
 		
-		# go over best labellings
+		# go over best labelings
 		for y in BHat:
 			prNonBlank=0
-			# if nonempty labelling
+			# if nonempty labeling
 			if len(y)>0:
 				# seq prob so far and prob of seeing last label again
 				prNonBlank=last.entries[y].prNonBlank*mat[t, y[-1]]
@@ -88,19 +88,19 @@ def ctcBeamSearch(mat, classes, lm):
 			prBlank=(last.entries[y].prTotal)*mat[t, blankIdx]
 			
 			# save result
-			addLabelling(curr, y)
+			addLabeling(curr, y)
 			curr.entries[y].y=y
 			curr.entries[y].prNonBlank+=prNonBlank
 			curr.entries[y].prBlank+=prBlank
 			curr.entries[y].prTotal+=prBlank+prNonBlank
 			
-			# extend current labelling
+			# extend current labeling
 			for k in range(maxC-1):
 				newY=y+(k,)
 				prNonBlank=calcExtPr(k, y, t, mat, last, lm, classes)
 				
 				# save result
-				addLabelling(curr, newY)
+				addLabeling(curr, newY)
 				curr.entries[newY].y=newY
 				curr.entries[newY].prNonBlank+=prNonBlank
 				curr.entries[newY].prTotal+=prNonBlank
@@ -108,15 +108,15 @@ def ctcBeamSearch(mat, classes, lm):
 		# set new beam state
 		last=curr
 		
-	# normalise probabilities according to labelling length
+	# normalise probabilities according to labeling length
 	last.norm() 
 	
 	 # sort by probability
-	bestLabelling=last.sort()[0] # get most probable labelling
+	bestLabeling=last.sort()[0] # get most probable labeling
 	
 	# map labels to chars
 	res=''
-	for l in bestLabelling:
+	for l in bestLabeling:
 		res+=classes[l]
 		
 	return res
