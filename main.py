@@ -1,5 +1,6 @@
 from __future__ import division
 from __future__ import print_function
+
 import numpy as np
 import BestPath
 import PrefixSearch
@@ -7,6 +8,11 @@ import BeamSearch
 import TokenPassing
 import LanguageModel
 import Loss
+
+# specify if GPU should be used (via OpenCL)
+useGPU = False
+if useGPU:
+	import BestPathCL
 
 
 def softmax(mat):
@@ -50,8 +56,34 @@ def testRealExample():
 	print('TOKEN         :', '"'+TokenPassing.ctcTokenPassing(mat, classes, lm.getWordList())+'"')
 	print('PROB(TARGET)  :', Loss.ctcLabelingProb(mat, gt, classes))
 	print('LOSS(TARGET)  :', Loss.ctcLoss(mat, gt, classes))
+	
+	
+def testRealExampleGPU():
+	"example which decodes a real RNN output. Taken from IAM dataset. RNN output produced by TensorFlow model."
+	
+	# possible chars
+	classes=' !"#&\'()*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 
+	# matrix containing TxC RNN output. C=len(classes)+1 because of blank label.
+	mat=softmax(loadRNNOutput('data/rnnOutput.csv'))
+	
+	# decode RNN output with best path decoding on GPU
+	batchSize=1000
+	maxT, maxC = mat.shape
+	clWrapper = BestPathCL.CLWrapper(batchSize, maxT, maxC)
+	
+	# stack mat multiple times to simulate large batch 
+	batch=np.stack([mat]*batchSize)
+	
+	# compute best path for each batch element
+	resBatch = BestPathCL.ctcBestPathCL(batch, classes, clWrapper)
+	
+	gt='the fake friend of the family, like the'
+	print('Compute for '+str(batchSize)+' batch elements.')
+	print('TARGET        :','"'+gt+'"')
+	print('BEST PATH GPU :', '"'+resBatch[0]+'"')
 
+		
 def testMiniExample():
 	"example which shows difference between taking most probable path and most probable labeling. No language model used."
 	
@@ -71,9 +103,14 @@ def testMiniExample():
 
 
 if __name__=='__main__':
+	
 	print('=====Mini example=====')
 	testMiniExample()
 	
 	print('=====Real example=====')
 	testRealExample()
+	
+	if useGPU:	
+		print('=====Real example: GPU=====')
+		testRealExampleGPU()
 

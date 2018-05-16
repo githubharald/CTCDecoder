@@ -1,2 +1,4 @@
 *.pyc
+*.log
 doc/notes.txt
+__pycache__
