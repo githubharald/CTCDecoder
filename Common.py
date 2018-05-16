@@ -4,7 +4,7 @@ from __future__ import print_function
 
 def extendByBlanks(seq, b):
 	"extends a label seq. by adding blanks at the beginning, end and in between each label"
-	res=[b]
+	res = [b]
 	for s in seq:
 		res.append(s)
 		res.append(b)
@@ -13,5 +13,5 @@ def extendByBlanks(seq, b):
 
 def wordToLabelSeq(w, classes):
 	"map a word to a sequence of labels (indices)"
-	res=[classes.index(c) for c in w]
+	res = [classes.index(c) for c in w]
 	return res
