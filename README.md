@@ -15,7 +15,7 @@ Connectionist Temporal Classification (CTC) decoding algorithms are implemented 
 It also gives suggestions when to use best path decoding, beam search decoding and token passing.
 
 ## Run
-```python main.py```
+Go to the `src/` directory and run the script ```python main.py```.
 
 Expected results:
 ```

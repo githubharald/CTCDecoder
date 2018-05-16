@@ -41,10 +41,10 @@ def testRealExample():
 	classes = ' !"#&\'()*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 
 	# matrix containing TxC RNN output. C=len(classes)+1 because of blank label.
-	mat = softmax(loadRNNOutput('data/rnnOutput.csv'))
+	mat = softmax(loadRNNOutput('../data/rnnOutput.csv'))
 
 	# language model: used for token passing (word list) and beam search (char bigrams)
-	lm = LanguageModel.LanguageModel('data/corpus.txt', classes)
+	lm = LanguageModel.LanguageModel('../data/corpus.txt', classes)
 
 	# decode RNN output with different decoding algorithms
 	gt = 'the fake friend of the family, like the'
@@ -65,7 +65,7 @@ def testRealExampleGPU():
 	classes = ' !"#&\'()*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 
 	# matrix containing TxC RNN output. C=len(classes)+1 because of blank label.
-	mat = softmax(loadRNNOutput('data/rnnOutput.csv'))
+	mat = softmax(loadRNNOutput('../data/rnnOutput.csv'))
 
 	# decode RNN output with best path decoding on GPU
 	batchSize = 1000
