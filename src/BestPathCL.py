@@ -1,6 +1,7 @@
 from __future__ import division
 from __future__ import print_function
 import os
+import time
 import numpy as np
 import pyopencl as cl
 
@@ -12,6 +13,7 @@ class CLWrapper:
 		"specify size: number of batch elements, number of time-steps, number of characters. Set kernelVariant to either 1 or 2. Set enableGPUDebug to True to debug kernel via CodeXL."
 
 		# force rebuild of program such that GPU debugger can attach to kernel
+		self.enableGPUDebug = enableGPUDebug
 		if enableGPUDebug:
 			os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 			os.environ['PYOPENCL_NO_CACHE'] = '1'
@@ -75,6 +77,10 @@ class CLWrapper:
 	def compute(self, batch):
 		"compute best path for each batch element. Returns blank-terminated label strings for batch elements."
 
+		# measure time in GPU debug mode
+		if self.enableGPUDebug:
+			t0 = time.time()
+
 		# copy batch to device
 		cl.enqueue_write_buffer(self.queue, self.batchBuf, batch.astype(np.float32), is_blocking=False)
 
@@ -88,6 +94,12 @@ class CLWrapper:
 
 		# copy result back from GPU and return it
 		cl.enqueue_read_buffer(self.queue, self.resBuf, self.res, is_blocking=True)
+
+		# measure time in GPU debug mode
+		if self.enableGPUDebug:
+			t1 = time.time()
+			print('BestPathCL.compute(...) time: ', t1-t0)
+
 		return self.res
 
 
@@ -117,7 +129,7 @@ def testBestPathCL():
 	classes = "ab"
 	mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
 	maxT, maxC = mat.shape
-	clWrapper = CLWrapper(1, maxT, maxC)
+	clWrapper = CLWrapper(1, maxT, maxC, enableGPUDebug=True)
 	print('Test best path decoding (CL)')
 	expected = ''
 	actual = ctcBestPathCL(np.stack([mat]), classes, clWrapper)[0]

@@ -13,6 +13,7 @@ import Loss
 useGPU = False
 if useGPU:
 	import BestPathCL
+	gpuDebug = True
 
 
 def softmax(mat):
@@ -70,7 +71,7 @@ def testRealExampleGPU():
 	# decode RNN output with best path decoding on GPU
 	batchSize = 1000
 	maxT, maxC = mat.shape
-	clWrapper = BestPathCL.CLWrapper(batchSize, maxT, maxC)
+	clWrapper = BestPathCL.CLWrapper(batchSize, maxT, maxC, kernelVariant=1, enableGPUDebug=gpuDebug)
 
 	# stack mat multiple times to simulate large batch
 	batch = np.stack([mat]*batchSize)
@@ -79,7 +80,7 @@ def testRealExampleGPU():
 	resBatch = BestPathCL.ctcBestPathCL(batch, classes, clWrapper)
 
 	gt = 'the fake friend of the family, like the'
-	print('Compute for ' + str(batchSize) + ' batch elements.')
+	print('Compute for ' + str(batchSize) + ' batch elements')
 	print('TARGET        :', '"' + gt + '"')
 	print('BEST PATH GPU :', '"' + resBatch[0] + '"')
 
