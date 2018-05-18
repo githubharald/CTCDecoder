@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import print_function
 import os
 import time
+import math
 import numpy as np
 import pyopencl as cl
 
@@ -19,8 +20,6 @@ class CLWrapper:
 			os.environ['PYOPENCL_NO_CACHE'] = '1'
 
 		#consts
-		sizeOfInt32 = 4
-		sizeOfFloat32 = 4
 		self.batchSize = batchSize
 		self.maxT = maxT
 		self.maxC = maxC
@@ -38,40 +37,35 @@ class CLWrapper:
 		self.queue = cl.CommandQueue(self.context, self.device) # command queue to first GPU
 
 		# buffer
-		self.batchBuf = cl.Buffer(self.context, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np.zeros([batchSize, maxC, maxT]).astype(np.float32))
+		sizeOfFloat32 = 4
+		batchBufSize = batchSize * maxC * maxT * sizeOfFloat32
+		self.batchBuf = cl.Buffer(self.context, cl.mem_flags.READ_ONLY, size=batchBufSize, hostbuf=None)
 		self.res = np.zeros([batchSize, maxT]).astype(np.int32)
 		self.resBuf = cl.Buffer(self.context, cl.mem_flags.WRITE_ONLY, self.res.nbytes)
 		self.tmpBuf = cl.Buffer(self.context, cl.mem_flags.WRITE_ONLY, self.res.nbytes)
 
-		# compile program
-		self.program = cl.Program(self.context, open('BestPathCL.cl').read()).build()
+		# compile program and use defines for program-constants to avoid passing private variables
+		buildOptions = "-D STEP_BEGIN={} -D MAX_T={} -D MAX_C={}".format(2 ** math.ceil(math.log2(maxT)), maxT, maxC)
+		self.program = cl.Program(self.context, open('BestPathCL.cl').read()).build(buildOptions)
 
 		# variant 1: single pass
 		if kernelVariant == 1:
 			self.kernel1 = cl.Kernel(self.program, 'bestPathAndCollapse')
 			self.kernel1.set_arg(0, self.batchBuf)
-			self.kernel1.set_arg(1, np.int32(maxT))
-			self.kernel1.set_arg(2, np.int32(maxC))
-			self.kernel1.set_arg(3, cl.LocalMemory(maxT * sizeOfInt32))
-			self.kernel1.set_arg(4, self.resBuf)
+			self.kernel1.set_arg(1, self.resBuf)
 
 		# variant 2: two passes
 		else:
 			# kernel1: calculate best path
 			self.kernel1 = cl.Kernel(self.program, 'bestPath')
 			self.kernel1.set_arg(0, self.batchBuf)
-			self.kernel1.set_arg(1, np.int32(maxT))
-			self.kernel1.set_arg(2, np.int32(maxC))
-			self.kernel1.set_arg(3, cl.LocalMemory(maxC * sizeOfFloat32))
-			self.kernel1.set_arg(4, cl.LocalMemory(maxC * sizeOfInt32))
-			self.kernel1.set_arg(5, self.tmpBuf)
+			self.kernel1.set_arg(1, self.tmpBuf)
 
 			# kernel2: collapse best path
 			self.kernel2 = cl.Kernel(self.program, 'collapsePath')
 			self.kernel2.set_arg(0, self.tmpBuf)
-			self.kernel2.set_arg(1, np.int32(maxT))
-			self.kernel2.set_arg(2, np.int32(maxC))
-			self.kernel2.set_arg(3, self.resBuf)
+			self.kernel2.set_arg(1, self.resBuf)
+
 
 
 	def compute(self, batch):

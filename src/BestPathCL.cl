@@ -1,83 +1,92 @@
+/* 
+best path decoding implemented in OpenCL
+two variants are provided:
+	variant 1: single-pass kernel
+	variant 2: two-pass kernel
+time measurement for 10000 batch elements on an AMD Radeon 8570: 
+	variant 1: 25ms
+	variant 2: 355ms + 5ms
+MAX_T, MAX_C and STEP_BEGIN are defined via program build options to avoid passing constant values to each kernel
+ */
+
+
 // index of BxTxC matrix to 1d index
-int BTCIndex1d(int b, int t, int c, int maxT, int maxC)
+int btcOffset1d(int b, int t)
 {
-	return b * maxC * maxT + t * maxC + c;
+	return b * MAX_C * MAX_T + t * MAX_C;
 }
 
 
 // index of BxT matrix to 1d index
-int BTIndex1d(int b, int t, int maxT)
+int btOffset1d(int b)
 {
-	return b * maxT + t;
-}
-
-
-// round integer value to next largest power of 2 (if not yet power of 2), e.g. 100->128 or 256->256
-int roundUpPow2(int val)
-{
-	// taken from: https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-	val--;
-	val |= val >> 1;
-	val |= val >> 2;
-	val |= val >> 4;
-	val |= val >> 8;
-	val |= val >> 16;
-	val++;
-	
-	return val;
+	return b * MAX_T;
 }
 
 
 // variant 1: single pass kernel
-__kernel void bestPathAndCollapse(__global float* in, int maxT, int maxC, __local int* locIdx, __global int* out)
+__kernel void bestPathAndCollapse(__global float* in, __global int* out)
 {
 	// constants
 	const int b = get_global_id(0);
 	const int t = get_local_id(1);
-	const int blankLabel = maxC - 1;
+	const int blankLabel = MAX_C - 1;
+	const int btcOffset = btcOffset1d(b, t);
 	
+	// find character with highest probability
 	float bestVal = 0.0f;
 	int bestIdx = 0;
-	for(int c = 0; c < maxC; ++c)
+	for(int c = 0; c < MAX_C; ++c)
 	{
-		const float currVal = in[BTCIndex1d(b, t, c, maxT, maxC)];
+		const float currVal = in[btcOffset + c];
 		if(currVal > bestVal)
 		{
 			bestVal = currVal;
 			bestIdx = c;
 		}
 	}
+	
+	// save result in local memory
+	__local int locIdx[MAX_T];
 	locIdx[t] = bestIdx;
 	barrier(CLK_LOCAL_MEM_FENCE);
 	
 	// collapse
 	if(t == 0)
 	{
+		const int btOffset = btOffset1d(b);
 		int lastLabel = blankLabel;
-		int currLabel = blankLabel;
 		int v = 0;
-		for(int u = 0; u < maxT; ++u)
+		for(int u = 0; u < MAX_T; ++u)
 		{
-			currLabel = locIdx[u];
+			const int currLabel = locIdx[u];
 			if(currLabel != lastLabel && currLabel != blankLabel)
 			{
-					out[BTIndex1d(b, v, maxT)] = currLabel;
+					out[btOffset + v] = currLabel;
 					v++;
 			}
 			lastLabel = currLabel;
 		}
 		
 		// put end marker at end of label string if needed
-		if(v != maxT)
+		if(v != MAX_T)
 		{
-			out[BTIndex1d(b, v, maxT)] = blankLabel;
+			out[btOffset + v] = blankLabel;
 		}
 	}
 }
 
 
+// struct holds index and value of a character
+typedef struct __attribute__ ((packed))
+{
+	float val;
+	int idx;
+} ValueIndexPair;
+
+
 // variant 2: pass 1/2, compute best path
-__kernel void bestPath(__global float* in, int maxT, int maxC, __local float* locVal, __local int* locIdx, __global int* out)
+__kernel void bestPath(__global float* in, __global int* out)
 {
 	// constants
 	const int b = get_global_id(0);
@@ -85,21 +94,19 @@ __kernel void bestPath(__global float* in, int maxT, int maxC, __local float* lo
 	const int c = get_local_id(2);
 	
 	// put into local memory
-	locVal[c] = in[BTCIndex1d(b, t, c, maxT, maxC)];
-	locIdx[c] = c;
+	__local ValueIndexPair valueIndexPairs[MAX_C];
+	__local ValueIndexPair* currPtr = valueIndexPairs + c;
+	currPtr->val = in[btcOffset1d(b, t)+c];
+	currPtr->idx = c;
 	barrier(CLK_LOCAL_MEM_FENCE);
 	
 	// reduce to largest value and corresponding index
-	for(int i = roundUpPow2(maxC) / 2; i > 0; i >>= 1)
+	for(int i = STEP_BEGIN; i > 0; i >>= 1)
 	{
-		if(c < i)
+		if(c < i && c + i < MAX_C)
 		{
-			const int d = c + i >= maxC ? c + i - maxC : c + i; // faster than (c + i) % maxC
-			if(locVal[c] < locVal[d])
-			{
-				locVal[c] = locVal[d];
-				locIdx[c] = locIdx[d];
-			}
+			__local ValueIndexPair* otherPtr = valueIndexPairs + c + i;
+			*currPtr = currPtr->val < otherPtr->val ? *otherPtr : *currPtr;
 		}
 		
 		barrier(CLK_LOCAL_MEM_FENCE);
@@ -108,38 +115,37 @@ __kernel void bestPath(__global float* in, int maxT, int maxC, __local float* lo
 	// write best label index to global memory
 	if(c == 0)
 	{
-		out[BTIndex1d(b, t, maxT)] = locIdx[0];
+		out[btOffset1d(b) + t] = currPtr->idx;
 	}
 }
 
 
 // variant 2: pass 2/2, collapse best path
-__kernel void collapsePath(__global int* in, int maxT, int maxC, __global int* out)
+__kernel void collapsePath(__global int* in, __global int* out)
 {
 	// constants
 	const int b = get_global_id(0);
-	const int blankLabel = maxC - 1;
+	const int blankLabel = MAX_C - 1;
+	const int btOffset = btOffset1d(b);
 	
 	// collapse
 	int lastLabel = blankLabel;
-	int currLabel = blankLabel;
 	int v = 0;
-	for(int u = 0; u < maxT; ++u)
+	for(int u = 0; u < MAX_T; ++u)
 	{
-		currLabel = in[BTIndex1d(b, u, maxT)];
+		const int currLabel = in[btOffset + u];
 		if(currLabel != lastLabel && currLabel != blankLabel)
 		{
-				out[BTIndex1d(b, v, maxT)] = currLabel;
+				out[btOffset + v] = currLabel;
 				v++;
 		}
 		lastLabel = currLabel;
 	}
 	
 	// put end marker at end of label string if needed
-	if(v != maxT)
+	if(v != MAX_T)
 	{
-		out[BTIndex1d(b, v, maxT)] = blankLabel;
+		out[btOffset + v] = blankLabel;
 	}
-	
 }
 
