@@ -89,7 +89,7 @@ def testMiniExample():
 	"example which shows difference between taking most probable path and most probable labeling. No language model used."
 
 	# possible chars and input matrix
-	classes = "ab"
+	classes = 'ab'
 	mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
 
 	# decode

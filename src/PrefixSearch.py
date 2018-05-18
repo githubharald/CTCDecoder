@@ -109,7 +109,7 @@ def ctcPrefixSearchHeuristicSplit(mat, classes):
 
 
 def testPrefixSearch():
-	classes = "ab"
+	classes = 'ab'
 	mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
 	print('Test prefix search decoding')
 	expected = 'a'

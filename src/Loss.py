@@ -68,7 +68,7 @@ def ctcLoss(mat, gt, classes):
 
 def testLoss():
 	"test loss"
-	classes = "aa"
+	classes = 'aa'
 	mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
 	print('Test loss calculation')
 	print(ctcLoss(mat, 'a', classes))

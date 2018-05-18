@@ -122,7 +122,7 @@ def ctcBeamSearch(mat, classes, lm):
 
 def testBeamSearch():
 	"test decoder"
-	classes = "ab"
+	classes = 'ab'
 	mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
 	print('Test beam search')
 	expected = 'a'

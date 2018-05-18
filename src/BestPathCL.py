@@ -45,7 +45,7 @@ class CLWrapper:
 		self.tmpBuf = cl.Buffer(self.context, cl.mem_flags.WRITE_ONLY, self.res.nbytes)
 
 		# compile program and use defines for program-constants to avoid passing private variables
-		buildOptions = "-D STEP_BEGIN={} -D MAX_T={} -D MAX_C={}".format(2 ** math.ceil(math.log2(maxT)), maxT, maxC)
+		buildOptions = '-D STEP_BEGIN={} -D MAX_T={} -D MAX_C={}'.format(2 ** math.ceil(math.log2(maxT)), maxT, maxC)
 		self.program = cl.Program(self.context, open('BestPathCL.cl').read()).build(buildOptions)
 
 		# variant 1: single pass
@@ -120,7 +120,7 @@ def ctcBestPathCL(batch, classes, clWrapper):
 
 def testBestPathCL():
 	"test decoder"
-	classes = "ab"
+	classes = 'ab'
 	mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
 	maxT, maxC = mat.shape
 	clWrapper = CLWrapper(1, maxT, maxC, enableGPUDebug=True)

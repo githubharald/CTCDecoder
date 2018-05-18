@@ -7,7 +7,7 @@ import Common
 
 class Token:
 	"token for token passing algorithm. Each token contains a score and a history of visited words."
-	def __init__(self, score=float("-inf"), history=None):
+	def __init__(self, score=float('-inf'), history=None):
 		self.score = score
 		self.history = history if history else []
 
@@ -49,7 +49,7 @@ def log(val):
 	"return -inf for log(0) instead of throwing error like python implementation does it"
 	if val > 0:
 		return math.log(val)
-	return float("-inf")
+	return float('-inf')
 
 
 def ctcTokenPassing(mat, classes, charWords):
@@ -133,7 +133,7 @@ def ctcTokenPassing(mat, classes, charWords):
 
 def testTokenPassing():
 	"test decoder"
-	classes = "ab"
+	classes = 'ab'
 	mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
 	print('Test token passing')
 	expected = 'a'
