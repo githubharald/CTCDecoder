@@ -10,7 +10,7 @@ import pyopencl as cl
 class CLWrapper:
 	"class holds information about OpenCL state"
 
-	def __init__(self, batchSize, maxT, maxC, kernelVariant=2, enableGPUDebug=False):
+	def __init__(self, batchSize, maxT, maxC, kernelVariant=1, enableGPUDebug=False):
 		"specify size: number of batch elements, number of time-steps, number of characters. Set kernelVariant to either 1 or 2. Set enableGPUDebug to True to debug kernel via CodeXL."
 
 		# force rebuild of program such that GPU debugger can attach to kernel
@@ -54,6 +54,9 @@ class CLWrapper:
 			self.kernel1.set_arg(0, self.batchBuf)
 			self.kernel1.set_arg(1, self.resBuf)
 
+			# all time-steps must fit into a work-group
+			assert maxT <= self.kernel1.get_work_group_info(cl.kernel_work_group_info.WORK_GROUP_SIZE, self.device)
+
 		# variant 2: two passes
 		else:
 			# kernel1: calculate best path
@@ -66,6 +69,8 @@ class CLWrapper:
 			self.kernel2.set_arg(0, self.tmpBuf)
 			self.kernel2.set_arg(1, self.resBuf)
 
+			# all chars must fit into a work-group
+			assert maxC <= self.kernel1.get_work_group_info(cl.kernel_work_group_info.WORK_GROUP_SIZE, self.device)
 
 
 	def compute(self, batch):
