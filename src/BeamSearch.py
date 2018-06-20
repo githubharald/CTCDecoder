@@ -106,8 +106,9 @@ def ctcBeamSearch(mat, classes, lm):
 		# set new beam state
 		last = curr
 
-	# normalise probabilities according to labeling length
-	last.norm()
+	# normalise probabilities according to labeling length if LM is used
+	if lm:
+		last.norm()
 
 	 # sort by probability
 	bestLabeling = last.sort()[0] # get most probable labeling
