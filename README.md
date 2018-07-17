@@ -4,7 +4,7 @@ Connectionist Temporal Classification (CTC) decoding algorithms are implemented 
 
 ## Run demo
 Go to the `src/` directory and run the script ```python main.py```.
-Adding the command line parameter ```gpu``` additionally executes best path decoding on the GPU.
+Appending the command line parameter ```gpu``` additionally executes best path decoding on the GPU.
 
 Expected results:
 ```
@@ -42,19 +42,19 @@ BEST PATH GPU : "the fak friend of the fomly hae tC"
 * Prefix Search Decoding: best-first search through tree of labelings. File: `PrefixSearch.py` \[1\]
 * Beam Search Decoding: iteratively searches for best labeling in a tree of labelings, optionally uses a character-level LM. File: `BeamSearch.py` \[2\] \[5\]
 * Token Passing: searches for most probable word sequence. The words are constrained to those contained in a dictionary. Can be extended to use a word-level LM. File: `TokenPassing.py` \[1\]
-* Lexicon Search: use approximation from best path decoding to find similar words in dictionary and return the one with highest score. File: `LexiconSearch.py` \[3\]
+* Lexicon Search: computes approximation with best path decoding to find similar words in dictionary. Returns the one with highest score. File: `LexiconSearch.py` \[3\]
 * Loss: calculates probability and loss of a given text in the RNN output. File: `Loss.py` \[1\] \[6\]
 * Word Beam Search: TensorFlow implementation see repository [CTCWordBeamSearch](https://github.com/githubharald/CTCWordBeamSearch)
 
 
 ## Choosing the right algorithm
-[This paper](./doc/comparison.pdf) compares beam search decoding and tpassing.
+[This paper](./doc/comparison.pdf) compares beam search decoding and token passing.
 It gives suggestions when to use best path decoding, beam search decoding and token passing.
 
 
 ## Testcases
 
-Illustration of the **Mini example** testcase: the RNN output matrix contains 2 time-steps (t0 and t1) and 3 labels (a, b and - representing the CTC-blank).
+The RNN output matrix of the **Mini example** testcase contains 2 time-steps (t0 and t1) and 3 labels (a, b and - representing the CTC-blank).
 Best path decoding (see left figure) takes the most probable label per time-step which gives the path "--" and therefore the recognized text "" with probability 0.6\*0.6=0.36.
 Beam search, prefix search and token passing calculate the probability of labelings. 
 For the labeling "a" these algorithms sum over the paths "-a", "a-" and "aa" (see right figure) with probability 0.6\*0.4+0.4\*0.6+0.4*0.4=0.64.
@@ -62,8 +62,8 @@ The only path which gives "" still has probability 0.36, therefore "a" is the re
 
 ![mini](./doc/mini.png)
 
-The **Word example** testcase contains a single word. 
-It is used to test the lexicon search \[3\].
+The **Word example** testcase contains a single word from the IAM Handwriting Database \[4\]. 
+It is used to test lexicon search \[3\].
 RNN output was generated with the [SimpleHTR](https://github.com/githubharald/SimpleHTR) model.
 Lexicon search first computes an approximation with best path decoding, then searches for similar words in a dictionary, and finally scores them by computing the loss and returning the most probable dictionary word.
 Best path decoding outputs "aircrapt", lexicon search is able to find similar words like "aircraft", "airplane", ... in the dictionary, calculates a score for each of them and finally returns "aircraft", which is the correct result.

@@ -27,7 +27,6 @@ def softmax(mat):
 		e = np.exp(y)
 		s = np.sum(e)
 		res[t, :] = e/s
-
 	return res
 
 
