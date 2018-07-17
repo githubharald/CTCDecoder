@@ -1,6 +1,7 @@
 from __future__ import division
 from __future__ import print_function
 
+import sys
 import numpy as np
 import BestPath
 import PrefixSearch
@@ -8,9 +9,10 @@ import BeamSearch
 import TokenPassing
 import LanguageModel
 import Loss
+import LexiconSearch
 
 # specify if GPU should be used (via OpenCL)
-useGPU = False
+useGPU = len(sys.argv) > 1 and sys.argv[1] == 'gpu'
 if useGPU:
 	import BestPathCL
 	gpuDebug = True
@@ -18,8 +20,7 @@ if useGPU:
 
 def softmax(mat):
 	"calc softmax such that labels per time-step form probability distribution"
-	# dim0=t, dim1=c
-	maxT, _ = mat.shape
+	maxT, _ = mat.shape # dim0=t, dim1=c
 	res = np.zeros(mat.shape)
 	for t in range(maxT):
 		y = mat[t, :]
@@ -31,21 +32,58 @@ def softmax(mat):
 
 
 def loadRNNOutput(fn):
-	"load matrix from csv file. Last entry in row terminated by semicolon."
+	"load RNN output from csv file. Last entry in row terminated by semicolon."
 	return np.genfromtxt(fn, delimiter=';')[:, : -1]
 
 
-def testRealExample():
-	"example which decodes a real RNN output. Taken from IAM dataset. RNN output produced by TensorFlow model."
+def testMiniExample():
+	"example which shows difference between taking most probable path and most probable labeling. No language model used."
 
-	# possible chars
+	# chars and input matrix
+	classes = 'ab'
+	mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
+
+	# decode
+	gt = 'a'
+	print('TARGET       :', '"' + gt + '"')
+	print('BEST PATH    :', '"' + BestPath.ctcBestPath(mat, classes) + '"')
+	print('PREFIX SEARCH:', '"' + PrefixSearch.ctcPrefixSearch(mat, classes) + '"')
+	print('BEAM SEARCH  :', '"' + BeamSearch.ctcBeamSearch(mat, classes, None) + '"')
+	print('TOKEN        :', '"' + TokenPassing.ctcTokenPassing(mat, classes, ['a', 'b', 'ab', 'ba']) + '"')
+	print('PROB(TARGET) :', Loss.ctcLabelingProb(mat, gt, classes))
+	print('LOSS(TARGET) :', Loss.ctcLoss(mat, gt, classes))
+
+
+def testWordExample():
+	"example which decodes a RNN output of a single word. Taken from IAM dataset. RNN output produced by TensorFlow model (see github.com/githubharald/SimpleHTR)."
+
+	# chars of IAM dataset
 	classes = ' !"#&\'()*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 
 	# matrix containing TxC RNN output. C=len(classes)+1 because of blank label.
-	mat = softmax(loadRNNOutput('../data/rnnOutput.csv'))
+	mat = softmax(loadRNNOutput('../data/word/rnnOutput.csv'))
+
+	# language model: used for 
+	lm = LanguageModel.LanguageModel('../data/word/corpus.txt', classes)
+
+	# decode RNN output with different decoding algorithms
+	gt = 'aircraft'
+	print('TARGET        :', '"' + gt + '"')
+	print('BEST PATH     :', '"' + BestPath.ctcBestPath(mat, classes) + '"')
+	print('LEXICON SEARCH:', '"' + LexiconSearch.ctcLexiconSearch(mat, classes, lm) + '"')
+
+
+def testLineExample():
+	"example which decodes a RNN output of a text line. Taken from IAM dataset. RNN output produced by TensorFlow model."
+
+	# chars of IAM dataset
+	classes = ' !"#&\'()*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+
+	# matrix containing TxC RNN output. C=len(classes)+1 because of blank label.
+	mat = softmax(loadRNNOutput('../data/line/rnnOutput.csv'))
 
 	# language model: used for token passing (word list) and beam search (char bigrams)
-	lm = LanguageModel.LanguageModel('../data/corpus.txt', classes)
+	lm = LanguageModel.LanguageModel('../data/line/corpus.txt', classes)
 
 	# decode RNN output with different decoding algorithms
 	gt = 'the fake friend of the family, like the'
@@ -59,14 +97,14 @@ def testRealExample():
 	print('LOSS(TARGET)  :', Loss.ctcLoss(mat, gt, classes))
 
 
-def testRealExampleGPU():
+def testLineExampleGPU():
 	"example which decodes a real RNN output. Taken from IAM dataset. RNN output produced by TensorFlow model."
 
 	# possible chars
 	classes = ' !"#&\'()*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 
 	# matrix containing TxC RNN output. C=len(classes)+1 because of blank label.
-	mat = softmax(loadRNNOutput('../data/rnnOutput.csv'))
+	mat = softmax(loadRNNOutput('../data/line/rnnOutput.csv'))
 
 	# decode RNN output with best path decoding on GPU
 	batchSize = 1000
@@ -85,32 +123,21 @@ def testRealExampleGPU():
 	print('BEST PATH GPU :', '"' + resBatch[0] + '"')
 
 
-def testMiniExample():
-	"example which shows difference between taking most probable path and most probable labeling. No language model used."
-
-	# possible chars and input matrix
-	classes = 'ab'
-	mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
-
-	# decode
-	gt = 'a'
-	print('TARGET       :', '"' + gt + '"')
-	print('BEST PATH    :', '"' + BestPath.ctcBestPath(mat, classes) + '"')
-	print('PREFIX SEARCH:', '"' + PrefixSearch.ctcPrefixSearch(mat, classes) + '"')
-	print('BEAM SEARCH  :', '"' + BeamSearch.ctcBeamSearch(mat, classes, None) + '"')
-	print('TOKEN        :', '"' + TokenPassing.ctcTokenPassing(mat, classes, ['a', 'b', 'ab', 'ba']) + '"')
-	print('PROB(TARGET) :', Loss.ctcLabelingProb(mat, gt, classes))
-	print('LOSS(TARGET) :', Loss.ctcLoss(mat, gt, classes))
-
-
 if __name__ == '__main__':
 
+	# example decoding matrix containing 2 time-steps and 2 chars
 	print('=====Mini example=====')
 	testMiniExample()
 
-	print('=====Real example=====')
-	testRealExample()
+	# example decoding a word
+	print('=====Word example=====')
+	testWordExample()
 
+	# example decoding a text-line
+	print('=====Line example=====')
+	testLineExample()
+
+	# example decoding a text-line, computed on the GPU with OpenCL
 	if useGPU:
-		print('=====Real example: GPU=====')
-		testRealExampleGPU()
+		print('=====Line example (GPU)=====')
+		testLineExampleGPU()

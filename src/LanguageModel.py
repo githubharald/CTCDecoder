@@ -8,9 +8,8 @@ class LanguageModel:
 	"simple language model: word list for token passing, char bigrams for beam search"
 	def __init__(self, fn, classes):
 		"read text from file to generate language model"
-		self.classes = classes
 		self.initWordList(fn)
-		self.initCharBigrams(fn)
+		self.initCharBigrams(fn, classes)
 
 
 	def initWordList(self, fn):
@@ -20,17 +19,17 @@ class LanguageModel:
 		self.words = list(filter(lambda x: x.isalpha(), words))
 
 
-	def initCharBigrams(self, fn):
+	def initCharBigrams(self, fn, classes):
 		"internal init of character bigrams"
 		self.bigram = {}
 		self.numSamples = {}
 		txt = codecs.open(fn, 'r', 'utf8').read()
 
 		# init bigrams with 0 values
-		for c in self.classes:
+		for c in classes:
 			self.bigram[c] = {}
-			self.numSamples[c] = len(self.classes)
-			for d in self.classes:
+			self.numSamples[c] = len(classes)
+			for d in classes:
 				self.bigram[c][d] = 0
 
 		# go through text and create each char bigrams
