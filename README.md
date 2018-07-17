@@ -84,8 +84,11 @@ The figure below shows the input image and the RNN output matrix with 100 time-s
 
 
 ## Data files
-* data/word/rnnOutput.csv and data/line/rnnOutput.csv: output of RNN layer (softmax not yet applied), which contains 32 or 100 time-steps and 80 label scores per time-step.
-* data/word/corpus.txt and data/line/corpus.txt: the text from which the language model is generated.
+The data files for the **Word example** are located in data/word and the files for the **Line example** in data/line.
+Each of these directories contains:
+* rnnOutput.csv: output of RNN layer (softmax not yet applied), which contains 32 or 100 time-steps and 80 label scores per time-step.
+* corpus.txt: the text from which the language model is generated.
+* img.png: the input image of the neural network. It is contained as an illustration, however, the decoding algorithms do not use it.
 
 
 ## Notes
@@ -102,10 +105,10 @@ A GPU implementation is provided for best path decoding which requires pyopencl 
 
 \[2\] Hwang - Character-level incremental speech recognition with recurrent neural networks
 
-\[3\] Shi - CRNN: https://github.com/bgshih/crnn
+\[3\] Shi - An End-to-End Trainable Neural Network for Image-based Sequence Recognition and Its Application to Scene Text Recognition: https://github.com/bgshih/crnn
 
-\[4\] Marti - IAM dataset: http://www.fki.inf.unibe.ch/databases/iam-handwriting-database
+\[4\] Marti - The IAM-database: an English sentence database for offline handwriting recognition: http://www.fki.inf.unibe.ch/databases/iam-handwriting-database
 
-\[5\] Beam Search Decoding in CTC-trained Neural Networks - https://towardsdatascience.com/5a889a3d85a7
+\[5\] Beam Search Decoding in CTC-trained Neural Networks: https://towardsdatascience.com/5a889a3d85a7
 
-\[6\] An Intuitive Explanation of Connectionist Temporal Classification - https://towardsdatascience.com/3797e43a86c
+\[6\] An Intuitive Explanation of Connectionist Temporal Classification: https://towardsdatascience.com/3797e43a86c
