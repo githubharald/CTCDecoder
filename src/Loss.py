@@ -5,19 +5,14 @@ import numpy as np
 import Common
 
 
-def alpha_prime(t, s, mat, lp, blank, cache):
-	"alpha(t-1,s)+alpha(t-1,s-1)"
-	return alpha(t-1, s, mat, lp, blank, cache)+alpha(t-1, s-1, mat, lp, blank, cache)
+def recLabelingProb(t, s, mat, labelingWithBlanks, blank, cache):
+	"recursively compute probability of labeling, save results of sub-problems in cache to avoid recalculating them"
 
-
-def alpha(t, s, mat, lp, blank, cache):
-	"calculate alpha value. t=time, s=label index, mat=matrix, lp=label with blanks, blank=index of blank, cache=table holding already calculated (sub-)results"
-
-	# 0 for s<0
+	# check index of labeling
 	if s < 0:
 		return 0.0
 
-	# already calculated?
+	# sub-problem already computed
 	if cache[t][s] != None:
 		return cache[t][s]
 
@@ -25,40 +20,40 @@ def alpha(t, s, mat, lp, blank, cache):
 	if t == 0:
 		if s == 0:
 			res = mat[0, blank]
-			cache[t][s] = res
-			return res
-		if s == 1:
-			res = mat[0, lp[1]]
-			cache[t][s] = res
-			return res
+		elif s == 1:
+			res = mat[0, labelingWithBlanks[1]]
+		else:
+			res = 0.0
 
-		res = 0.0
 		cache[t][s] = res
 		return res
 
 	# recursion on s and t
-	if lp[s] == blank or (s >= 2 and lp[s-2] == lp[s]):
-		res = alpha_prime(t, s, mat, lp, blank, cache)*mat[t, lp[s]]
+	res = (recLabelingProb(t-1, s, mat, labelingWithBlanks, blank, cache) + recLabelingProb(t-1, s-1, mat, labelingWithBlanks, blank, cache)) * mat[t, labelingWithBlanks[s]]
+
+	# in case of a blank or a repeated label, we only consider s and s-1 at t-1, so we're done
+	if labelingWithBlanks[s] == blank or (s >= 2 and labelingWithBlanks[s-2] == labelingWithBlanks[s]):
 		cache[t][s] = res
 		return res
 
-	res = (alpha_prime(t, s, mat, lp, blank, cache) + alpha(t-1, s-2, mat, lp, blank, cache)) * mat[t, lp[s]]
+	# otherwise, in case of a non-blank and non-repeated label, we additionally add s-2 at t-1
+	res += recLabelingProb(t-1, s-2, mat, labelingWithBlanks, blank, cache) * mat[t, labelingWithBlanks[s]]
 	cache[t][s] = res
 	return res
 
 
-def emptyCache(maxT, lp):
+def emptyCache(maxT, labelingWithBlanks):
 	"create empty cache"
-	return [[None for _ in range(len(lp))] for _ in range(maxT)]
+	return [[None for _ in range(len(labelingWithBlanks))] for _ in range(maxT)]
 
 
 def ctcLabelingProb(mat, gt, classes):
 	"calculate probability p(gt|mat) of a given labeling gt and a matrix mat according to section 'The CTC Forward-Backward Algorithm' in Graves paper"
 	maxT, _ = mat.shape # size of input matrix
 	blank = len(classes) # index of blank label
-	lp = Common.extendByBlanks(Common.wordToLabelSeq(gt, classes), blank) # ground truth text as label string extended by blanks
-	cache = emptyCache(maxT, lp) # cache subresults to avoid recalculating the same subproblems
-	return alpha(maxT-1, len(lp)-1, mat, lp, blank, cache) + alpha(maxT-1, len(lp)-2, mat, lp, blank, cache)
+	labelingWithBlanks = Common.extendByBlanks(Common.wordToLabelSeq(gt, classes), blank) # ground truth text as label string extended by blanks
+	cache = emptyCache(maxT, labelingWithBlanks) # cache subresults to avoid recalculating  subproblems over and over again
+	return recLabelingProb(maxT-1, len(labelingWithBlanks)-1, mat, labelingWithBlanks, blank, cache) + recLabelingProb(maxT-1, len(labelingWithBlanks)-2, mat, labelingWithBlanks, blank, cache)
 
 
 def ctcLoss(mat, gt, classes):
@@ -68,10 +63,14 @@ def ctcLoss(mat, gt, classes):
 
 def testLoss():
 	"test loss"
-	classes = 'aa'
+	classes = 'ab'
 	mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
 	print('Test loss calculation')
-	print(ctcLoss(mat, 'a', classes))
+	expected = 0.64
+	actual = ctcLabelingProb(mat, 'a', classes)
+	print('Expected: ' + str(expected))
+	print('Actual: ' + str(actual))
+	print('OK' if expected == actual else 'ERROR')
 
 
 if __name__ == '__main__':
