@@ -44,11 +44,11 @@ BEST PATH GPU : "the fak friend of the fomly hae tC"
 * Token Passing: searches for most probable word sequence. The words are constrained to those contained in a dictionary. Can be extended to use a word-level LM. File: `TokenPassing.py` \[1\]
 * Lexicon Search: computes approximation with best path decoding to find similar words in dictionary. Returns the one with highest score. File: `LexiconSearch.py` \[3\]
 * Loss: calculates probability and loss of a given text in the RNN output. File: `Loss.py` \[1\] \[6\]
-* Word Beam Search: TensorFlow implementation see repository [CTCWordBeamSearch](https://github.com/githubharald/CTCWordBeamSearch)
+* Word Beam Search: TensorFlow implementation see repository [CTCWordBeamSearch](https://github.com/githubharald/CTCWordBeamSearch) \[8\]
 
 
 ## Choosing the right algorithm
-[This paper](./doc/comparison.pdf) compares beam search decoding and token passing.
+[This paper](./doc/comparison.pdf) \[7\] compares beam search decoding and token passing.
 It gives suggestions when to use best path decoding, beam search decoding and token passing.
 
 
@@ -101,14 +101,18 @@ A GPU implementation is provided for best path decoding which requires pyopencl 
 
 ## References
 
-\[1\] Graves - Supervised sequence labelling with recurrent neural networks
+\[1\] [Graves - Supervised sequence labelling with recurrent neural networks](https://www.cs.toronto.edu/~graves/preprint.pdf)
 
-\[2\] Hwang - Character-level incremental speech recognition with recurrent neural networks
+\[2\] [Hwang - Character-level incremental speech recognition with recurrent neural networks](https://arxiv.org/pdf/1601.06581.pdf)
 
-\[3\] Shi - An End-to-End Trainable Neural Network for Image-based Sequence Recognition and Its Application to Scene Text Recognition: https://github.com/bgshih/crnn
+\[3\] [Shi - An End-to-End Trainable Neural Network for Image-based Sequence Recognition and Its Application to Scene Text Recognition](https://arxiv.org/pdf/1507.05717.pdf)
 
-\[4\] Marti - The IAM-database: an English sentence database for offline handwriting recognition: http://www.fki.inf.unibe.ch/databases/iam-handwriting-database
+\[4\] [Marti - The IAM-database: an English sentence database for offline handwriting recognition](http://www.fki.inf.unibe.ch/databases/iam-handwriting-database)
 
-\[5\] Beam Search Decoding in CTC-trained Neural Networks: https://towardsdatascience.com/5a889a3d85a7
+\[5\] [Beam Search Decoding in CTC-trained Neural Networks](https://towardsdatascience.com/5a889a3d85a7)
 
-\[6\] An Intuitive Explanation of Connectionist Temporal Classification: https://towardsdatascience.com/3797e43a86c
+\[6\] [An Intuitive Explanation of Connectionist Temporal Classification](https://towardsdatascience.com/3797e43a86c)
+
+\[7\] [Scheidl - Comparison of Connectionist Temporal Classification Decoding Algorithms](./doc/comparison.pdf)
+
+\[8\] [Scheidl - Word Beam Search: A Connectionist Temporal Classification Decoding Algorithm](https://repositum.tuwien.ac.at/obvutwoa/download/pdf/2774578)
