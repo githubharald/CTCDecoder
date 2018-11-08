@@ -2,14 +2,13 @@ import BestPath
 import Loss
 
 
-def ctcLexiconSearch(mat, classes, bkTree):
+def ctcLexiconSearch(mat, classes, bkTree, tolerance):
 	"compute approximation with best path decoding, search most similar words in dictionary, calculate score for each of them, return best scoring one. See Shi, Bai and Yao."
 
 	# use best path decoding to get an approximation
 	approx = BestPath.ctcBestPath(mat, classes)
 
 	# get similar words from dictionary within given tolerance
-	tolerance = 4
 	words = bkTree.query(approx, tolerance)
 
 	# if there are no similar words, return empty string

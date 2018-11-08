@@ -67,13 +67,14 @@ def testWordExample():
 	# BK tree to find similar words
 	with open('../data/word/corpus.txt') as f:
 		words = f.read().split()
+	tolerance = 4
 	bkTree = BKTree.BKTree(words)
 
 	# decode RNN output with different decoding algorithms
 	gt = 'aircraft'
 	print('TARGET        :', '"' + gt + '"')
 	print('BEST PATH     :', '"' + BestPath.ctcBestPath(mat, classes) + '"')
-	print('LEXICON SEARCH:', '"' + LexiconSearch.ctcLexiconSearch(mat, classes, bkTree) + '"')
+	print('LEXICON SEARCH:', '"' + LexiconSearch.ctcLexiconSearch(mat, classes, bkTree, tolerance) + '"')
 
 
 def testLineExample():
