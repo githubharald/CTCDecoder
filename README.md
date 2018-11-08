@@ -65,8 +65,8 @@ The only path which gives "" still has probability 0.36, therefore "a" is the re
 The **Word example** testcase contains a single word from the IAM Handwriting Database \[4\]. 
 It is used to test lexicon search \[3\].
 RNN output was generated with the [SimpleHTR](https://github.com/githubharald/SimpleHTR) model.
-Lexicon search first computes an approximation with best path decoding, then searches for similar words in a dictionary, and finally scores them by computing the loss and returning the most probable dictionary word.
-Best path decoding outputs "aircrapt", lexicon search is able to find similar words like "aircraft", "airplane", ... in the dictionary, calculates a score for each of them and finally returns "aircraft", which is the correct result.
+Lexicon search first computes an approximation with best path decoding, then searches for similar words in a dictionary using a BK tree, and finally scores them by computing the loss and returning the most probable dictionary word.
+Best path decoding outputs "aircrapt", lexicon search is able to find similar words like "aircraft" and "airplane" in the dictionary, calculates a score for each of them and finally returns "aircraft", which is the correct result.
 The figure below shows the input image and the RNN output matrix with 32 time-steps and 80 classes (the last one being the CTC-blank).
 Each column sums to 1 and each entry represents the probability of seeing a label at a given time-step.
 

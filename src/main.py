@@ -8,8 +8,10 @@ import PrefixSearch
 import BeamSearch
 import TokenPassing
 import LanguageModel
+import BKTree
 import Loss
 import LexiconSearch
+
 
 # specify if GPU should be used (via OpenCL)
 useGPU = len(sys.argv) > 1 and sys.argv[1] == 'gpu'
@@ -62,14 +64,16 @@ def testWordExample():
 	# matrix containing TxC RNN output. C=len(classes)+1 because of blank label.
 	mat = softmax(loadRNNOutput('../data/word/rnnOutput.csv'))
 
-	# language model: used for 
-	lm = LanguageModel.LanguageModel('../data/word/corpus.txt', classes)
+	# BK tree to find similar words
+	with open('../data/word/corpus.txt') as f:
+		words = f.read().split()
+	bkTree = BKTree.BKTree(words)
 
 	# decode RNN output with different decoding algorithms
 	gt = 'aircraft'
 	print('TARGET        :', '"' + gt + '"')
 	print('BEST PATH     :', '"' + BestPath.ctcBestPath(mat, classes) + '"')
-	print('LEXICON SEARCH:', '"' + LexiconSearch.ctcLexiconSearch(mat, classes, lm) + '"')
+	print('LEXICON SEARCH:', '"' + LexiconSearch.ctcLexiconSearch(mat, classes, bkTree) + '"')
 
 
 def testLineExample():
