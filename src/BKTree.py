@@ -2,13 +2,11 @@ import editdistance as ed
 
 
 class BKTree:
-	"Burkhard Keller Tree: used to find strings within tolerance (w.r.t. edit distance metric) to given query string"
+	"Burkhard Keller tree: used to find strings within tolerance (w.r.t. edit distance metric) to given query string"
 
 
 	def __init__(self, txtList):
 		"pass list of texts (words) to insert into tree"
-		
-		# insert list entries
 		self.root = None
 		for txt in txtList:
 			self._insert(self.root, txt)
@@ -16,8 +14,6 @@ class BKTree:
 
 	def query(self, txt, tolerance):
 		"query strings within given tolerance (w.r.t. edit distance metric)"
-		if self.root is None:
-			return []
 		return self._query(self.root, txt, tolerance)
 
 
@@ -36,6 +32,10 @@ class BKTree:
 
 
 	def _query(self, node, txt, tolerance):
+		# handle empty root node
+		if node is None:
+			return []
+
 		# distance between query and current node
 		d = ed.eval(node[0], txt)
 
