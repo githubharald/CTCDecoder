@@ -58,7 +58,10 @@ def ctcLabelingProb(mat, gt, classes):
 
 def ctcLoss(mat, gt, classes):
 	"calculate CTC loss"
-	return -math.log(ctcLabelingProb(mat, gt, classes))
+	try:
+		return -math.log(ctcLabelingProb(mat, gt, classes))
+	except:
+		return float('inf')
 
 
 def testLoss():
