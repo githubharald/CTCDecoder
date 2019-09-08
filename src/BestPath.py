@@ -4,36 +4,34 @@ import numpy as np
 
 
 def ctcBestPath(mat, classes):
-	"implements best path decoding as shown by Graves (Dissertation, p63)"
+    "implements best path decoding as shown by Graves (Dissertation, p63)"
 
-	# dim0=t, dim1=c
-	maxT, maxC = mat.shape
-	label = ''
-	blankIdx = len(classes)
-	lastMaxIdx = maxC # init with invalid label
+    # get list of char indices along best path
+    best_path = np.argmax(mat, axis=1)
 
-	for t in range(maxT):
-		maxIdx = np.argmax(mat[t, :])
+    # collapse best path and map char indices to string
+    blank_idx = len(classes)
+    last_char_idx = blank_idx
+    res = ''
+    for char_idx in best_path:
+        if char_idx != last_char_idx and char_idx != blank_idx:
+            res += classes[char_idx]
+        last_char_idx = char_idx
 
-		if maxIdx != lastMaxIdx and maxIdx != blankIdx:
-			label += classes[maxIdx]
-
-		lastMaxIdx = maxIdx
-
-	return label
+    return res
 
 
 def testBestPath():
-	"test decoder"
-	classes = 'ab'
-	mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
-	print('Test best path decoding')
-	expected = ''
-	actual = ctcBestPath(mat, classes)
-	print('Expected: "' + expected + '"')
-	print('Actual: "' + actual + '"')
-	print('OK' if expected == actual else 'ERROR')
+    "test decoder"
+    classes = 'ab'
+    mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
+    print('Test best path decoding')
+    expected = ''
+    actual = ctcBestPath(mat, classes)
+    print('Expected: "' + expected + '"')
+    print('Actual: "' + actual + '"')
+    print('OK' if expected == actual else 'ERROR')
 
 
 if __name__ == '__main__':
-	testBestPath()
+    testBestPath()
