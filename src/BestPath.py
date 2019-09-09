@@ -1,23 +1,19 @@
 from __future__ import division
 from __future__ import print_function
+from itertools import groupby
 import numpy as np
 
 
 def ctcBestPath(mat, classes):
     "implements best path decoding as shown by Graves (Dissertation, p63)"
 
-    # get list of char indices along best path
+    # get char indices along best path
     best_path = np.argmax(mat, axis=1)
 
-    # collapse best path and map char indices to string
+    # collapse best path (using itertools.groupby), map to chars, join char list to string
     blank_idx = len(classes)
-    last_char_idx = blank_idx
-    res = ''
-    for char_idx in best_path:
-        if char_idx != last_char_idx and char_idx != blank_idx:
-            res += classes[char_idx]
-        last_char_idx = char_idx
-
+    best_chars_collapsed = [classes[k] for k, _ in groupby(best_path) if k != blank_idx]
+    res = ''.join(best_chars_collapsed)
     return res
 
 
