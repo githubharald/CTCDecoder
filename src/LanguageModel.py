@@ -21,18 +21,12 @@ class LanguageModel:
 
 	def initCharBigrams(self, fn, classes):
 		"internal init of character bigrams"
-		self.bigram = {}
-		self.numSamples = {}
-		txt = codecs.open(fn, 'r', 'utf8').read()
 
 		# init bigrams with 0 values
-		for c in classes:
-			self.bigram[c] = {}
-			self.numSamples[c] = len(classes)
-			for d in classes:
-				self.bigram[c][d] = 0
+		self.bigram = {c: {d: 0 for d in classes} for c in classes}
 
-		# go through text and create each char bigrams
+		# go through text and add each char bigram
+		txt = codecs.open(fn, 'r', 'utf8').read()
 		for i in range(len(txt)-1):
 			first = txt[i]
 			second = txt[i+1]
@@ -42,7 +36,6 @@ class LanguageModel:
 				continue
 
 			self.bigram[first][second] += 1
-			self.numSamples[first] += 1
 
 
 	def getCharBigram(self, first, second):
@@ -50,9 +43,11 @@ class LanguageModel:
 		first = first if first else ' ' # map start to word beginning
 		second = second if second else ' ' # map end to word end
 
-		if self.numSamples[first] == 0:
+		# number of bigrams starting with given char
+		numBigrams = sum(self.bigram[first].values())
+		if numBigrams == 0:
 			return 0
-		return self.bigram[first][second] / self.numSamples[first]
+		return self.bigram[first][second] / numBigrams
 
 
 	def getWordList(self):
