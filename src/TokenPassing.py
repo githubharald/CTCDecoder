@@ -52,9 +52,9 @@ def log(val):
 	return float('-inf')
 
 
-def ctcTokenPassing(mat, classes, charWords):
+def ctcTokenPassing(mat, classes, charWords, blankIdx=None):
 	"implements CTC Token Passing Algorithm as shown by Graves (Dissertation, p67-69)"
-	blankIdx = len(classes)
+	blankIdx = len(classes) if blankIdx is None else blankIdx
 	maxT, _ = mat.shape
 
 	# special s index for beginning and end of word
@@ -107,7 +107,11 @@ def ctcTokenPassing(mat, classes, charWords):
 			# 18-24
 			s = 1
 			while s <= len(wPrime):
-				P = [toks.get(wIdx, s, t-1), toks.get(wIdx, s - 1, t - 1)]
+				if s == 1:
+					P = [toks.get(wIdx, s, t - 1), toks.get(wIdx, s - 1, t)]
+				else:
+					P = [toks.get(wIdx, s, t - 1), toks.get(wIdx, s - 1, t - 1)]
+
 				if wPrime[s-1] != blankIdx and s > 2 and wPrime[s - 2 - 1] != wPrime[s - 1]:
 					tok = toks.get(wIdx, s - 2, t - 1)
 					P.append(Token(tok.score, tok.history))
