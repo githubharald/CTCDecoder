@@ -52,9 +52,9 @@ def log(val):
 	return float('-inf')
 
 
-def ctcTokenPassing(mat, classes, charWords, blankIdx=None):
+def ctcTokenPassing(mat, classes, charWords):
 	"implements CTC Token Passing Algorithm as shown by Graves (Dissertation, p67-69)"
-	blankIdx = len(classes) if blankIdx is None else blankIdx
+	blankIdx = len(classes)
 	maxT, _ = mat.shape
 
 	# special s index for beginning and end of word
@@ -97,7 +97,6 @@ def ctcTokenPassing(mat, classes, charWords, blankIdx=None):
 
 		for wIdx in sortedWordIdx:
 			wPrime = primeWords[wIdx]
-			w = words[wIdx]
 
 			# 15-17
 			# if bigrams should be used, these lines have to be adapted
