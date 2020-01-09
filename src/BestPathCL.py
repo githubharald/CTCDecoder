@@ -81,7 +81,7 @@ class CLWrapper:
 			t0 = time.time()
 
 		# copy batch to device
-		cl.enqueue_write_buffer(self.queue, self.batchBuf, batch.astype(np.float32), is_blocking=False)
+		cl.enqueue_copy(self.queue, self.batchBuf, batch.astype(np.float32), is_blocking=False)
 
 		# one pass
 		if self.kernelVariant == 1:
@@ -92,7 +92,7 @@ class CLWrapper:
 			cl.enqueue_nd_range_kernel(self.queue, self.kernel2, (self.batchSize,), None)
 
 		# copy result back from GPU and return it
-		cl.enqueue_read_buffer(self.queue, self.resBuf, self.res, is_blocking=True)
+		cl.enqueue_copy(self.queue, self.res,self.resBuf, is_blocking=True)
 
 		# measure time in GPU debug mode
 		if self.enableGPUDebug:
