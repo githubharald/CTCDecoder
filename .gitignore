@@ -4,3 +4,5 @@ doc/notes.txt
 doc/matrix.svg
 __pycache__/
 .idea/
+ctc_decoder.egg-info
+.pytest_cache
