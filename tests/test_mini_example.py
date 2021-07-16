@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 
-from ctc_decoder import LanguageModel
 from ctc_decoder import beam_search
 from ctc_decoder import best_path
 from ctc_decoder import prefix_search
@@ -33,8 +32,7 @@ def test_best_path(mat, labels):
 
 def test_token_passing(mat, labels):
     expected = 'a'
-    lm = LanguageModel('a b ab ba', labels)
-    actual = token_passing(mat, labels, lm)
+    actual = token_passing(mat, labels, ['a', 'b', 'ab', 'ba'])
     assert actual == expected
 
 

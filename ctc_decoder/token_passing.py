@@ -1,9 +1,9 @@
 import math
+from typing import List
 
 import numpy as np
 
 from ctc_decoder import common
-from ctc_decoder.language_model import LanguageModel
 
 
 class Token:
@@ -55,7 +55,7 @@ def log(val):
     return float('-inf')
 
 
-def token_passing(mat: np.ndarray, labels: str, lm: LanguageModel) -> str:
+def token_passing(mat: np.ndarray, labels: str, words: List[str]) -> str:
     """Token passing algorithm.
 
     See dissertation of Graves, p67-69.
@@ -63,7 +63,7 @@ def token_passing(mat: np.ndarray, labels: str, lm: LanguageModel) -> str:
     Args:
         mat: Output of neural network of shape TxC.
         labels: The set of characters the neural network can recognize, excluding the CTC-blank.
-        lm: Instance of language model which provides a list of words.
+        words: List of words that can be recognized.
 
     Returns:
         The decoded text.
@@ -77,7 +77,6 @@ def token_passing(mat: np.ndarray, labels: str, lm: LanguageModel) -> str:
     end = -1
 
     # map characters to labels for each word
-    words = lm.get_word_list()
     label_words = [common.word_to_label_seq(w, labels) for w in words]
 
     # w' in paper: word with blanks in front, back and between labels: for -> _f_o_r_

@@ -1,23 +1,13 @@
-import re
-from typing import List
-
-
 class LanguageModel:
-    "Simple language model: word list for token passing, char bigrams for beam search."
+    "Simple character-level language model."
 
     def __init__(self, txt: str, labels: str) -> None:
         """Create language model from text corpus."""
         txt = ' ' + txt + ' '  # ensure first/last characters appear next to whitespace
-        self._init_word_list(txt)
         self._init_char_bigrams(txt, labels)
 
-    def _init_word_list(self, txt):
-        """Init of word list."""
-        words = re.findall(r'\w+', txt)
-        self.words = list(filter(lambda x: x.isalpha(), words))
-
     def _init_char_bigrams(self, txt, labels):
-        """Init of character bigrams."""
+        """Initialize table of character bigrams."""
 
         # init bigrams with 0 values
         self.bigram = {c: {d: 0 for d in labels} for c in labels}
@@ -43,7 +33,3 @@ class LanguageModel:
         if num_bigrams == 0:
             return 0
         return self.bigram[first][second] / num_bigrams
-
-    def get_word_list(self) -> List[str]:
-        """Get list of unique words."""
-        return self.words

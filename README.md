@@ -1,18 +1,22 @@
 # CTC Decoding Algorithms
+
+**Update 2021: installable Python package**
+
 Python implementation of some common **Connectionist Temporal Classification (CTC) decoding algorithms**. 
 A minimalistic **language model** is provided.
 
 ## Installation
+
 * Go to the root level of the repository
 * Execute `pip install .`
-* Go to `tests/` and execute `pytest` to see if everything works
+* Go to `tests/` and execute `pytest` to check if installation worked
 
 
 ## Usage
 
 ### Basic usage
 
-Here is a first example on how to use the decoders:
+Here is a minimalistic executable example:
 
 ````python
 import numpy as np
@@ -25,9 +29,9 @@ print(f'Best path: "{best_path(mat, labels)}"')
 print(f'Beam search: "{beam_search(mat, labels)}"')
 ````
 
-The output `mat` of the CTC-trained neural network is expected to have shape TxC 
+The output `mat` (numpy array, softmax already applied) of the CTC-trained neural network is expected to have shape TxC 
 and is passed as the first argument to the decoders.
-T is the number of time-steps, and C the number of characters (including CTC-blank).
+T is the number of time-steps, and C the number of characters (the CTC-blank is the last element).
 The labels predicted by the neural network are passed as the `labels` string to the decoder. 
 Decoders return the decoded string.  
 This should output:
@@ -41,53 +45,61 @@ To see more examples on how to use the decoders,
 please have a look at the scripts in the `tests/` folder.
 
 
+
 ### Language model and BK-tree
 
-Beam search and token passing use a language model.
-A text corpus and the labels than can be predicted by the neural network are passed to its constructor:
+Beam search can use a character-level language model.
+Text statistics (bigrams) are used by beam search to improve reading accuracy.
 
 ````python
-from ctc_decoder import LanguageModel
+from ctc_decoder import beam_search, LanguageModel
 
-lm = LanguageModel('aaab', 'ab')
-print(f'Bigram "aa": {lm.get_char_bigram("a", "a")}')
-print(f'Bigram "ab": {lm.get_char_bigram("a", "b")}')
+# create language model instance from a (large) text
+lm = LanguageModel('this is some text', labels)
+
+# and use it in the beam search decoder
+res = beam_search(mat, labels, lm=lm)
 ````
 
-The output shows the bigram probabilities for two character pairs:
-````
-Bigram "aa": 0.6666666666666666
-Bigram "ab": 0.3333333333333333
-````
-
-Lexicon search needs a BK-tree instance to get a list of similar dictionary words, given a query word.
-The following sample shows how to create an instance of that tree and how to search for similar words:
+The lexicon search decoder computes a first approximation with best path decoding.
+Then, it uses a BK tree to retrieve similar words, scores them and finally returns the best scoring word.
+The BK-tree is created by providing a list of dictionary words.
+A tolerance parameter defines the maximum edit distance from the query word to the returned dictionary words.
 
 ````python
-from ctc_decoder import BKTree
+from ctc_decoder import lexicon_search, BKTree
 
-bk_tree = BKTree(['bad', 'bag', 'ball'])
-query = 'bar'
-print(f"Words similar to '{query}': {bk_tree.query(query, tolerance=1)}")
+# create BK-tree from a list of words
+bk_tree = BKTree(['words', 'from', 'a', 'dictionary'])
+
+# and use the tree in the lexicon search
+res = lexicon_search(mat, labels, bk_tree, tolerance=2)
 ````
 
-It outputs:
-
-````
-Words similar to 'bar': ['bad', 'bag']
-````
+### Usage with deep learning frameworks
+Some notes:
+* No adapter for TensorFlow or PyTorch is provided
+* Apply softmax already in the model
+* Convert to numpy array
+* Usually, the output of RNN layers `rnn_output` has shape TxBxC, with B the batch dimension 
+  * Decoders work on single batch elements of shape TxC
+  * Therefore, iterate over all batch elements and apply the decoder to each separatelly
+  * Example: extract matrix of batch element 0 `mat = rnn_output[:, 0, :]`
+* The CTC-blank is expected to be the last element in the character dimension
+  * TensorFlow has the CTC-blank as last element, so nothing to do here
+  * PyTorch, however, has the CTC-blank as first element by default, so you have to move it to the end, or change the default setting 
 
 ## List of provided decoders
 
 Recommended decoders:
-* `best_path`: best path or greedy decoder, the fastest decoder, however, it might give worse results than the other decoders
-* `beam_search`: beam search decoder, optionally integrating a character-level language model, can be tuned via the beam width parameter
+* `best_path`: best path (or greedy) decoder, the fastest of all algorithms, however, other decoders often perform better
+* `beam_search`: beam search decoder, optionally integrates a character-level language model, can be tuned via the beam width parameter
 * `lexicon_search`: lexicon search decoder, returns the best scoring word from a dictionary
 
 Other decoders, from my experience not really suited for practical purposes, 
 but might be used for experiments or research:
-* `token_passing`: token passing algorithm
 * `prefix_search`: prefix search decoder
+* `token_passing`: token passing algorithm
 * Best path decoder implementation using OpenCL (see `extras/` folder)
 
 [This paper](./doc/comparison.pdf) gives suggestions when to use best path decoding, beam search decoding and token passing.
