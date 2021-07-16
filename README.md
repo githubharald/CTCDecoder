@@ -62,7 +62,7 @@ res = beam_search(mat, labels, lm=lm)
 ````
 
 The lexicon search decoder computes a first approximation with best path decoding.
-Then, it uses a BK tree to retrieve similar words, scores them and finally returns the best scoring word.
+Then, it uses a BK-tree to retrieve similar words, scores them and finally returns the best scoring word.
 The BK-tree is created by providing a list of dictionary words.
 A tolerance parameter defines the maximum edit distance from the query word to the returned dictionary words.
 
@@ -81,11 +81,11 @@ Some notes:
 * No adapter for TensorFlow or PyTorch is provided
 * Apply softmax already in the model
 * Convert to numpy array
-* Usually, the output of RNN layers `rnn_output` has shape TxBxC, with B the batch dimension 
+* Usually, the output of an RNN layer `rnn_output` has shape TxBxC, with B the batch dimension 
   * Decoders work on single batch elements of shape TxC
-  * Therefore, iterate over all batch elements and apply the decoder to each separatelly
+  * Therefore, iterate over all batch elements and apply the decoder to each of them separately
   * Example: extract matrix of batch element 0 `mat = rnn_output[:, 0, :]`
-* The CTC-blank is expected to be the last element in the character dimension
+* The CTC-blank is expected to be the last element along the character dimension
   * TensorFlow has the CTC-blank as last element, so nothing to do here
   * PyTorch, however, has the CTC-blank as first element by default, so you have to move it to the end, or change the default setting 
 
