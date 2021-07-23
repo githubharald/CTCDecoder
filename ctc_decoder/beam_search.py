@@ -4,18 +4,21 @@ import numpy as np
 
 from ctc_decoder.language_model import LanguageModel
 
+LOG_ZERO = float("-inf")
 
 class BeamEntry:
     """Information about one single beam at specific time-step."""
 
     def __init__(self):
-        self.pr_total = 0  # blank and non-blank
-        self.pr_non_blank = 0  # non-blank
-        self.pr_blank = 0  # blank
-        self.pr_text = 1  # LM score
+        self.pr_total = LOG_ZERO  # blank and non-blank
+        self.pr_non_blank = LOG_ZERO  # non-blank
+        self.pr_blank = LOG_ZERO  # blank
+        self.pr_text = 0  # LM score
         self.lm_applied = False  # flag if LM was already applied to this beam
         self.labeling = ()  # beam-labeling
 
+    def is_empty(self):
+        return len(self.labeling) == 0
 
 class BeamState:
     """Information about all beams at specific time-step."""
@@ -27,12 +30,12 @@ class BeamState:
         """Length-normalise LM score."""
         for k in self.entries.keys():
             labeling_len = len(self.entries[k].labeling)
-            self.entries[k].pr_text = self.entries[k].pr_text ** (1.0 / (labeling_len if labeling_len else 1.0))
+            self.entries[k].pr_text = (1.0 / (labeling_len if labeling_len else 1.0)) * self.entries[k].pr_text
 
     def sort(self):
         """Return beam-labelings, sorted by probability."""
         beams = [v for (_, v) in self.entries.items()]
-        sorted_beams = sorted(beams, reverse=True, key=lambda x: x.pr_total * x.pr_text)
+        sorted_beams = sorted(beams, reverse=True, key=lambda x: x.pr_total + x.pr_text)
         return [x.labeling for x in sorted_beams]
 
 
@@ -42,8 +45,11 @@ def apply_lm(parent_beam, child_beam, labels, lm):
         c1 = labels[parent_beam.labeling[-1] if parent_beam.labeling else labels.index(' ')]  # first char
         c2 = labels[child_beam.labeling[-1]]  # second char
         lm_factor = 0.01  # influence of language model
-        bigram_prob = lm.get_char_bigram(c1, c2) ** lm_factor
-        child_beam.pr_text = parent_beam.pr_text * bigram_prob  # probability of char sequence
+        bigram_prob = lm_factor * np.log(lm.get_char_bigram(c1, c2))
+        if parent_beam.is_empty():
+            child_beam.pr_text = bigram_prob  # first char in beam
+        else:
+            child_beam.pr_text = parent_beam.pr_text + bigram_prob  # probability of char sequence
         child_beam.lm_applied = True  # only apply LM once per beam entry
 
 
@@ -75,8 +81,8 @@ def beam_search(mat: np.ndarray, labels: str, beam_width: int = 25, lm: Optional
     last = BeamState()
     labeling = ()
     last.entries[labeling] = BeamEntry()
-    last.entries[labeling].pr_blank = 1
-    last.entries[labeling].pr_total = 1
+    last.entries[labeling].pr_blank = LOG_ZERO
+    last.entries[labeling].pr_total = LOG_ZERO
 
     # go over all time-steps
     for t in range(max_T):
@@ -89,23 +95,29 @@ def beam_search(mat: np.ndarray, labels: str, beam_width: int = 25, lm: Optional
         for labeling in best_labelings:
 
             # probability of paths ending with a non-blank
-            pr_non_blank = 0
+            pr_non_blank = LOG_ZERO
             # in case of non-empty beam
             if labeling:
                 # probability of paths with repeated last char at the end
-                pr_non_blank = last.entries[labeling].pr_non_blank * mat[t, labeling[-1]]
+                if last.entries[labeling].pr_non_blank == LOG_ZERO:
+                    pr_non_blank = np.log(mat[t, labeling[-1]])  # cannot add to -inf
+                else:
+                    pr_non_blank = last.entries[labeling].pr_non_blank + np.log(mat[t, labeling[-1]])
 
             # probability of paths ending with a blank
-            pr_blank = last.entries[labeling].pr_total * mat[t, blank_idx]
+            if last.entries[labeling].pr_total == LOG_ZERO:
+                pr_blank = np.log(mat[t, blank_idx]) # cannot add to -inf
+            else:
+                pr_blank = last.entries[labeling].pr_total + np.log(mat[t, blank_idx])
 
             # add beam at current time-step if needed
             add_beam(curr, labeling)
 
             # fill in data
             curr.entries[labeling].labeling = labeling
-            curr.entries[labeling].pr_non_blank += pr_non_blank
-            curr.entries[labeling].pr_blank += pr_blank
-            curr.entries[labeling].pr_total += pr_blank + pr_non_blank
+            curr.entries[labeling].pr_non_blank = np.logaddexp(curr.entries[labeling].pr_non_blank, pr_non_blank)
+            curr.entries[labeling].pr_blank = np.logaddexp(curr.entries[labeling].pr_blank, pr_blank)
+            curr.entries[labeling].pr_total = np.logaddexp(curr.entries[labeling].pr_total, np.logaddexp(pr_blank, pr_non_blank))
             curr.entries[labeling].pr_text = last.entries[labeling].pr_text
             curr.entries[labeling].lm_applied = True  # LM already applied at previous time-step for this beam-labeling
 
@@ -116,17 +128,22 @@ def beam_search(mat: np.ndarray, labels: str, beam_width: int = 25, lm: Optional
 
                 # if new labeling contains duplicate char at the end, only consider paths ending with a blank
                 if labeling and labeling[-1] == c:
-                    pr_non_blank = mat[t, c] * last.entries[labeling].pr_blank
+                    # if pr_blank is 0 then we cannot extend the beam with a  dupe char
+                    # so pr_non_blank should still be 0 (-inf in log-space)
+                    pr_non_blank = last.entries[labeling].pr_blank + np.log(mat[t, c])
                 else:
-                    pr_non_blank = mat[t, c] * last.entries[labeling].pr_total
+                    if last.entries[labeling].pr_total == LOG_ZERO:
+                        pr_non_blank = np.log(mat[t, c])  # cannot add to -inf
+                    else:
+                        pr_non_blank = last.entries[labeling].pr_total + np.log(mat[t, c])
 
                 # add beam at current time-step if needed
                 add_beam(curr, new_labeling)
 
                 # fill in data
                 curr.entries[new_labeling].labeling = new_labeling
-                curr.entries[new_labeling].pr_non_blank += pr_non_blank
-                curr.entries[new_labeling].pr_total += pr_non_blank
+                curr.entries[new_labeling].pr_non_blank = np.logaddexp(curr.entries[new_labeling].pr_non_blank, pr_non_blank)
+                curr.entries[new_labeling].pr_total = np.logaddexp(curr.entries[new_labeling].pr_total, pr_non_blank)
 
                 # apply LM
                 apply_lm(curr.entries[labeling], curr.entries[new_labeling], labels, lm)
