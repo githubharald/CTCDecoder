@@ -51,7 +51,7 @@ def empty_cache(max_T, labeling_with_blanks):
     return [[None for _ in range(len(labeling_with_blanks))] for _ in range(max_T)]
 
 
-def probability(mat: np.ndarray, gt: str, labels: str) -> float:
+def probability(mat: np.ndarray, gt: str, chars: str) -> float:
     """Compute probability of ground truth text gt given neural network output mat.
 
     See the CTC Forward-Backward Algorithm in Graves paper.
@@ -59,15 +59,15 @@ def probability(mat: np.ndarray, gt: str, labels: str) -> float:
     Args:
         mat: Output of neural network of shape TxC.
         gt: Ground truth text.
-        labels: The set of characters the neural network can recognize, excluding the CTC-blank.
+        chars: The set of characters the neural network can recognize, excluding the CTC-blank.
 
     Returns:
         The probability of the text given the neural network output.
     """
 
     max_T, _ = mat.shape  # size of input matrix
-    blank = len(labels)  # index of blank label
-    labeling_with_blanks = common.extend_by_blanks(common.word_to_label_seq(gt, labels), blank)
+    blank = len(chars)  # index of blank label
+    labeling_with_blanks = common.extend_by_blanks(common.word_to_label_seq(gt, chars), blank)
     cache = empty_cache(max_T, labeling_with_blanks)
 
     p1 = recursive_probability(max_T - 1, len(labeling_with_blanks) - 1, mat, labeling_with_blanks, blank, cache)
@@ -76,7 +76,7 @@ def probability(mat: np.ndarray, gt: str, labels: str) -> float:
     return p
 
 
-def loss(mat: np.ndarray, gt: str, labels: str) -> float:
+def loss(mat: np.ndarray, gt: str, chars: str) -> float:
     """Compute loss of ground truth text gt given neural network output mat.
 
     See the CTC Forward-Backward Algorithm in Graves paper.
@@ -84,13 +84,13 @@ def loss(mat: np.ndarray, gt: str, labels: str) -> float:
     Args:
         mat: Output of neural network of shape TxC.
         gt: Ground truth text.
-        labels: The set of characters the neural network can recognize, excluding the CTC-blank.
+        chars: The set of characters the neural network can recognize, excluding the CTC-blank.
 
     Returns:
         The probability of the text given the neural network output.
     """
 
     try:
-        return -math.log(probability(mat, gt, labels))
+        return -math.log(probability(mat, gt, chars))
     except ValueError:
         return float('inf')

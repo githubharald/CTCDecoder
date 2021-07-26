@@ -1,16 +1,16 @@
 class LanguageModel:
     "Simple character-level language model."
 
-    def __init__(self, txt: str, labels: str) -> None:
+    def __init__(self, txt: str, chars: str) -> None:
         """Create language model from text corpus."""
         txt = ' ' + txt + ' '  # ensure first/last characters appear next to whitespace
-        self._init_char_bigrams(txt, labels)
+        self._init_char_bigrams(txt, chars)
 
-    def _init_char_bigrams(self, txt, labels):
+    def _init_char_bigrams(self, txt: str, chars: str) -> None:
         """Initialize table of character bigrams."""
 
         # init bigrams with 0 values
-        self.bigram = {c: {d: 0 for d in labels} for c in labels}
+        self.bigram = {c: {d: 0 for d in chars} for c in chars}
 
         # go through text and add each char bigram
         for i in range(len(txt) - 1):

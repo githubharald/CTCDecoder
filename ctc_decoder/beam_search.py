@@ -36,11 +36,11 @@ class BeamState:
         return [x.labeling for x in sorted_beams]
 
 
-def apply_lm(parent_beam, child_beam, labels, lm):
+def apply_lm(parent_beam, child_beam, chars, lm):
     """Calculate LM score of child beam by taking score from parent beam and bigram probability of last two chars."""
     if lm and not child_beam.lm_applied:
-        c1 = labels[parent_beam.labeling[-1] if parent_beam.labeling else labels.index(' ')]  # first char
-        c2 = labels[child_beam.labeling[-1]]  # second char
+        c1 = chars[parent_beam.labeling[-1] if parent_beam.labeling else chars.index(' ')]  # first char
+        c2 = chars[child_beam.labeling[-1]]  # second char
         lm_factor = 0.01  # influence of language model
         bigram_prob = lm.get_char_bigram(c1, c2) ** lm_factor
         child_beam.pr_text = parent_beam.pr_text * bigram_prob  # probability of char sequence
@@ -53,14 +53,14 @@ def add_beam(beam_state, labeling):
         beam_state.entries[labeling] = BeamEntry()
 
 
-def beam_search(mat: np.ndarray, labels: str, beam_width: int = 25, lm: Optional[LanguageModel] = None) -> str:
+def beam_search(mat: np.ndarray, chars: str, beam_width: int = 25, lm: Optional[LanguageModel] = None) -> str:
     """Beam search decoder.
 
     See the paper of Hwang et al. and the paper of Graves et al.
 
     Args:
         mat: Output of neural network of shape TxC.
-        labels: The set of characters the neural network can recognize, excluding the CTC-blank.
+        chars: The set of characters the neural network can recognize, excluding the CTC-blank.
         beam_width: Number of beams kept per iteration.
         lm: Character level language model if specified.
 
@@ -68,7 +68,7 @@ def beam_search(mat: np.ndarray, labels: str, beam_width: int = 25, lm: Optional
         The decoded text.
     """
 
-    blank_idx = len(labels)
+    blank_idx = len(chars)
     max_T, max_C = mat.shape
 
     # initialise beam state
@@ -129,7 +129,7 @@ def beam_search(mat: np.ndarray, labels: str, beam_width: int = 25, lm: Optional
                 curr.entries[new_labeling].pr_total += pr_non_blank
 
                 # apply LM
-                apply_lm(curr.entries[labeling], curr.entries[new_labeling], labels, lm)
+                apply_lm(curr.entries[labeling], curr.entries[new_labeling], chars, lm)
 
         # set new beam state
         last = curr
@@ -140,6 +140,6 @@ def beam_search(mat: np.ndarray, labels: str, beam_width: int = 25, lm: Optional
     # sort by probability
     best_labeling = last.sort()[0]  # get most probable labeling
 
-    # map labels to chars
-    res = ''.join([labels[l] for l in best_labeling])
+    # map label string to char string
+    res = ''.join([chars[l] for l in best_labeling])
     return res

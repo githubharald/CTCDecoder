@@ -40,7 +40,7 @@ def word_mat():
 
 
 @pytest.fixture
-def labels():
+def chars():
     return ' !"#&\'()*+,-./0123456789:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 
 
@@ -58,56 +58,56 @@ def words():
     return words
 
 
-def test_line_example_best_path(line_mat, labels):
+def test_line_example_best_path(line_mat, chars):
     mat = line_mat
-    assert best_path(mat, labels) == 'the fak friend of the fomly hae tC'
+    assert best_path(mat, chars) == 'the fak friend of the fomly hae tC'
 
 
-def test_line_example_prefix_search_heuristic_split(line_mat, labels):
+def test_line_example_prefix_search_heuristic_split(line_mat, chars):
     mat = line_mat
-    assert prefix_search_heuristic_split(mat, labels) == 'the fak friend of the fomcly hae tC'
+    assert prefix_search_heuristic_split(mat, chars) == 'the fak friend of the fomcly hae tC'
 
 
-def test_line_example_beam_search(line_mat, labels):
+def test_line_example_beam_search(line_mat, chars):
     mat = line_mat
-    assert beam_search(mat, labels) == 'the fak friend of the fomcly hae tC'
+    assert beam_search(mat, chars) == 'the fak friend of the fomcly hae tC'
 
 
-def test_line_example_beam_search_with_language_model(line_mat, labels, corpus):
+def test_line_example_beam_search_with_language_model(line_mat, chars, corpus):
     mat = line_mat
 
     # create language model from text corpus
-    lm = LanguageModel(corpus, labels)
+    lm = LanguageModel(corpus, chars)
 
-    assert beam_search(mat, labels, lm=lm) == 'the fake friend of the family, lie th'
+    assert beam_search(mat, chars, lm=lm) == 'the fake friend of the family, lie th'
 
 
-def test_line_example_token_passing(line_mat, labels, corpus):
+def test_line_example_token_passing(line_mat, chars, corpus):
     mat = line_mat
 
     # create language model from text corpus
     words = re.findall(r'\w+', corpus)
 
-    assert token_passing(mat, labels, words) == 'the fake friend of the family fake the'
+    assert token_passing(mat, chars, words) == 'the fake friend of the family fake the'
 
 
-def test_line_example_loss_and_probability(line_mat, labels):
+def test_line_example_loss_and_probability(line_mat, chars):
     mat = line_mat
     gt = 'the fake friend of the family, like the'
 
-    assert np.isclose(probability(mat, gt, labels), 6.31472642886565e-13)
-    assert np.isclose(loss(mat, gt, labels), 28.090721774903226)
+    assert np.isclose(probability(mat, gt, chars), 6.31472642886565e-13)
+    assert np.isclose(loss(mat, gt, chars), 28.090721774903226)
 
 
-def test_word_example_best_path(word_mat, labels, words):
+def test_word_example_best_path(word_mat, chars, words):
     mat = word_mat
-    assert best_path(mat, labels) == 'aircrapt'
+    assert best_path(mat, chars) == 'aircrapt'
 
 
-def test_word_example_lexicon_search(word_mat, labels, words):
+def test_word_example_lexicon_search(word_mat, chars, words):
     mat = word_mat
 
     # create BK tree from list of words
     bk_tree = BKTree(words)
 
-    assert lexicon_search(mat, labels, bk_tree, tolerance=4) == 'aircraft'
+    assert lexicon_search(mat, chars, bk_tree, tolerance=4) == 'aircraft'

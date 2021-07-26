@@ -14,41 +14,41 @@ def mat():
 
 
 @pytest.fixture
-def labels():
+def chars():
     return 'ab'
 
 
-def test_beam_search(mat, labels):
+def test_beam_search(mat, chars):
     expected = 'a'
-    actual = beam_search(mat, labels)
+    actual = beam_search(mat, chars)
     assert actual == expected
 
 
-def test_best_path(mat, labels):
+def test_best_path(mat, chars):
     expected = ''
-    actual = best_path(mat, labels)
+    actual = best_path(mat, chars)
     assert actual == expected
 
 
-def test_token_passing(mat, labels):
+def test_token_passing(mat, chars):
     expected = 'a'
-    actual = token_passing(mat, labels, ['a', 'b', 'ab', 'ba'])
+    actual = token_passing(mat, chars, ['a', 'b', 'ab', 'ba'])
     assert actual == expected
 
 
-def test_prefix_search(mat, labels):
+def test_prefix_search(mat, chars):
     expected = 'a'
-    actual = prefix_search(mat, labels)
+    actual = prefix_search(mat, chars)
     assert actual == expected
 
 
-def test_probability(mat, labels):
+def test_probability(mat, chars):
     expected = 0.64
-    actual = probability(mat, 'a', labels)
+    actual = probability(mat, 'a', chars)
     assert actual == expected
 
 
-def test_loss(mat, labels):
+def test_loss(mat, chars):
     expected = -np.log(0.64)
-    actual = loss(mat, 'a', labels)
+    actual = loss(mat, 'a', chars)
     assert actual == expected

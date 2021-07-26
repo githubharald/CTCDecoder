@@ -23,18 +23,18 @@ import numpy as np
 from ctc_decoder import best_path, beam_search
 
 mat = np.array([[0.4, 0, 0.6], [0.4, 0, 0.6]])
-labels = 'ab'
+chars = 'ab'
 
-print(f'Best path: "{best_path(mat, labels)}"')
-print(f'Beam search: "{beam_search(mat, labels)}"')
+print(f'Best path: "{best_path(mat, chars)}"')
+print(f'Beam search: "{beam_search(mat, chars)}"')
 ````
 
 The output `mat` (numpy array, softmax already applied) of the CTC-trained neural network is expected to have shape TxC 
 and is passed as the first argument to the decoders.
 T is the number of time-steps, and C the number of characters (the CTC-blank is the last element).
-The labels predicted by the neural network are passed as the `labels` string to the decoder. 
+The characters that can be predicted by the neural network are passed as the `chars` string to the decoder.
 Decoders return the decoded string.  
-This should output:
+Running the code outputs:
 
 ````
 Best path: ""
@@ -48,17 +48,17 @@ please have a look at the scripts in the `tests/` folder.
 
 ### Language model and BK-tree
 
-Beam search can use a character-level language model.
+Beam search can optionally integrate a character-level language model.
 Text statistics (bigrams) are used by beam search to improve reading accuracy.
 
 ````python
 from ctc_decoder import beam_search, LanguageModel
 
 # create language model instance from a (large) text
-lm = LanguageModel('this is some text', labels)
+lm = LanguageModel('this is some text', chars)
 
 # and use it in the beam search decoder
-res = beam_search(mat, labels, lm=lm)
+res = beam_search(mat, chars, lm=lm)
 ````
 
 The lexicon search decoder computes a first approximation with best path decoding.
@@ -73,7 +73,7 @@ from ctc_decoder import lexicon_search, BKTree
 bk_tree = BKTree(['words', 'from', 'a', 'dictionary'])
 
 # and use the tree in the lexicon search
-res = lexicon_search(mat, labels, bk_tree, tolerance=2)
+res = lexicon_search(mat, chars, bk_tree, tolerance=2)
 ````
 
 ### Usage with deep learning frameworks
@@ -100,7 +100,7 @@ Other decoders, from my experience not really suited for practical purposes,
 but might be used for experiments or research:
 * `prefix_search`: prefix search decoder
 * `token_passing`: token passing algorithm
-* Best path decoder implementation using OpenCL (see `extras/` folder)
+* Best path decoder implementation in OpenCL (see `extras/` folder)
 
 [This paper](./doc/comparison.pdf) gives suggestions when to use best path decoding, beam search decoding and token passing.
 

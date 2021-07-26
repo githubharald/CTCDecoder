@@ -1,5 +1,5 @@
 def extend_by_blanks(seq, b):
-    "extends a label seq. by adding blanks at the beginning, end and in between each label"
+    """Extend a label seq. by adding blanks at the beginning, end and in between each label."""
     res = [b]
     for s in seq:
         res.append(s)
@@ -7,7 +7,7 @@ def extend_by_blanks(seq, b):
     return res
 
 
-def word_to_label_seq(w, labels):
-    "map a word to a sequence of labels (indices)"
-    res = [labels.index(c) for c in w]
+def word_to_label_seq(w, chars):
+    """Map a word (string of characters) to a sequence of labels (indices)."""
+    res = [chars.index(c) for c in w]
     return res

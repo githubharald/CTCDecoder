@@ -5,7 +5,7 @@ from ctc_decoder.bk_tree import BKTree
 from ctc_decoder.loss import probability
 
 
-def lexicon_search(mat: np.ndarray, labels: str, bk_tree: BKTree, tolerance: int) -> str:
+def lexicon_search(mat: np.ndarray, chars: str, bk_tree: BKTree, tolerance: int) -> str:
     """Lexicon search decoder.
 
     The algorithm computes a first approximation using best path decoding. Similar words are queried using the BK tree.
@@ -14,7 +14,7 @@ def lexicon_search(mat: np.ndarray, labels: str, bk_tree: BKTree, tolerance: int
 
     Args:
         mat: Output of neural network of shape TxC.
-        labels: The set of characters the neural network can recognize, excluding the CTC-blank.
+        chars: The set of characters the neural network can recognize, excluding the CTC-blank.
         bk_tree: Instance of BKTree which is used to query similar words.
         tolerance: Words to be considered, which are within specified edit distance.
 
@@ -23,7 +23,7 @@ def lexicon_search(mat: np.ndarray, labels: str, bk_tree: BKTree, tolerance: int
     """
 
     # use best path decoding to get an approximation
-    approx = best_path(mat, labels)
+    approx = best_path(mat, chars)
 
     # get similar words from dictionary within given tolerance
     words = bk_tree.query(approx, tolerance)
@@ -33,6 +33,6 @@ def lexicon_search(mat: np.ndarray, labels: str, bk_tree: BKTree, tolerance: int
         return ''
 
     # else compute probabilities of all similar words and return best scoring one
-    word_probs = [(w, probability(mat, w, labels)) for w in words]
+    word_probs = [(w, probability(mat, w, chars)) for w in words]
     word_probs.sort(key=lambda x: x[1], reverse=True)
     return word_probs[0][0]

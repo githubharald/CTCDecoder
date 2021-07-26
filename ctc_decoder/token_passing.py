@@ -55,21 +55,21 @@ def log(val):
     return float('-inf')
 
 
-def token_passing(mat: np.ndarray, labels: str, words: List[str]) -> str:
+def token_passing(mat: np.ndarray, chars: str, words: List[str]) -> str:
     """Token passing algorithm.
 
     See dissertation of Graves, p67-69.
 
     Args:
         mat: Output of neural network of shape TxC.
-        labels: The set of characters the neural network can recognize, excluding the CTC-blank.
+        chars: The set of characters the neural network can recognize, excluding the CTC-blank.
         words: List of words that can be recognized.
 
     Returns:
         The decoded text.
     """
 
-    blank_idx = len(labels)
+    blank_idx = len(chars)
     max_T, _ = mat.shape
 
     # special s index for beginning and end of word
@@ -77,7 +77,7 @@ def token_passing(mat: np.ndarray, labels: str, words: List[str]) -> str:
     end = -1
 
     # map characters to labels for each word
-    label_words = [common.word_to_label_seq(w, labels) for w in words]
+    label_words = [common.word_to_label_seq(w, chars) for w in words]
 
     # w' in paper: word with blanks in front, back and between labels: for -> _f_o_r_
     prime_words = [common.extend_by_blanks(w, blank_idx) for w in label_words]
